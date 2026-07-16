@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第0章 イントロダクション - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .chap-hero{ aspect-ratio:16/9; margin:2em 0; }
+  .quiz-section{ background:var(--panel); padding:24px; border-radius:10px; margin:2em 0; }
+  .quiz-q{ margin:1.5em 0 1em; font-weight:600; }
+  .quiz-opts{ display:flex; flex-direction:column; gap:.8em; margin-left:1.5em; }
+  .quiz-opt{ display:flex; align-items:flex-start; gap:.8em; }
+  .quiz-opt input[type="radio"]{ margin-top:.3em; accent-color:var(--photon); }
+  .quiz-opt label{ cursor:pointer; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第0章</span>
+    <h1>イントロダクション</h1>
+    <p class="lead">なぜ数式で光を計算するのか。Cook-Torrance がゲーム業界でどう使われているか。このサイトの学び方とゴールを紹介します。</p>
+  </section>
+
+  <section>
+    <h2>フォトリアルの正体は物理シミュレーション</h2>
+    <p>
+      ゲームやCG映画で「本物そっくり」に見える映像は、光学や物理学を基に<strong>数式で光を計算</strong>しています。
+      単に「暗い/明るい」を決めるのではなく、「この材質は、この角度から来た光をどれだけ反射するか」を計算で求めるのです。
+    </p>
+    <p>
+      例えば、濡れた路面と乾いた路面は見た目が全く違います。
+      乾いた時は光が内部に吸収されて暗く、濡れた時は表面で反射して光ります。
+      この違いを「数式」で再現することが、フォトリアルな見た目の秘訣です。
+    </p>
+  </section>
+
+  <section>
+    <h2>Cook-Torrance BRDF とは</h2>
+    <p>
+      <strong>Cook-Torrance</strong> は、1982年に発表されたマイクロファセット BRDF（二方向反射率分布関数）です。
+      「この方向からの光は、この方向へどれだけ反射するか」を数式で表すモデル。
+    </p>
+    <p>
+      ゲーム業界の事実上の標準で、以下の環境で採用されています：
+    </p>
+    <ul>
+      <li><strong>Unreal Engine 4/5</strong> — 標準の PBR（Physically Based Rendering）</li>
+      <li><strong>Unity</strong> — Standard Shader, HDRP の基礎</li>
+      <li><strong>Substance 3D Designer</strong> — マテリアル設計の業界標準</li>
+      <li><strong>多くのリアルタイムエンジン</strong> — Maya, Blender プラグイン等</li>
+    </ul>
+    <p>
+      つまり、ここで学ぶ数式は、実はプロの現場で毎日使われているものです。
+    </p>
+  </section>
+
+  <section>
+    <h2>このサイトの学び方</h2>
+    <p>
+      <strong>「完全理解」とは次の3つができる状態です：</strong>
+    </p>
+    <ol>
+      <li>反射方程式と Cook-Torrance の式に出てくる全記号を、自分の言葉で説明できる</li>
+      <li>パラメータ（roughness, metallic, F0 など）を変えたとき、数値と見た目がどう変わるかを<strong>予測</strong>できる</li>
+      <li>シェーダコード（GLSL）と数式の対応が取れる</li>
+    </ol>
+    <p>
+      そのために、このサイトでは：
+    </p>
+    <ul>
+      <li><strong>数学は必要な時に必要な分だけ</strong>教えます。中学数学を前提としているため、三角関数やベクトルは登場時に丁寧に説明します</li>
+      <li><strong>全ての数式に日本語での読み下しを併記</strong>します。例：<code>n·l</code> = 「面の向きと光の向きがどれだけ揃っているか（0〜1）」</li>
+      <li><strong>インタラクティブなウィジェット</strong>を使って、スライダーやクリックで値を変え、即座に結果を見られるようにします</li>
+      <li><strong>各章末にクイズ</strong>を用意し、理解度をチェックできるようにします</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>完成版ビューポートのプレビュー</h2>
+    <p>
+      最終的にすべての式が1つのシェーダに合流した<strong>総合ビューポート</strong>がこれです。
+      球体のパラメータを変えながら、「数式がどう見た目に影響するか」を体験できます。
+    </p>
+    <div class="chap-hero vp-stage">
+      <canvas id="preview"></canvas>
+      <div class="vp-badge">Cook-Torrance / GGX（フル機能版）</div>
+    </div>
+    <p style="font-size:13px; color:var(--ink-dim); margin-top:.5em">
+      このプレビューはビューポート機能の簡略版です。
+      <a href="viewport.html">フルビューポート</a>では、ライト・マテリアルパラメータの全制御、
+      項別表示、ピクセル検査が可能です。
+    </p>
+  </section>
+
+  <section>
+    <h2>カリキュラム概要</h2>
+    <p>
+      12章に分けて、「引き算できる」ところから「Cook-Torrance の全式」まで進みます：
+    </p>
+    <table style="width:100%; margin-top:1em; border-collapse:collapse;">
+      <thead>
+        <tr style="background:var(--panel-2); border-bottom:1px solid var(--line);">
+          <th style="padding:.6em; text-align:left; font-weight:600;">ブロック</th>
+          <th style="padding:.6em; text-align:left; font-weight:600;">内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>第0章</strong></td>
+          <td style="padding:.6em;">イントロダクション（いま、ここ）</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>第1〜3章</strong></td>
+          <td style="padding:.6em;">数学の基礎：ベクトル・内積・積分</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>第4章</strong></td>
+          <td style="padding:.6em;">反射方程式（全体像）</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>第5〜11章</strong></td>
+          <td style="padding:.6em;">BRDF の分解：Diffuse, D, F, G, Metallic, エネルギー保存</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>第12章</strong></td>
+          <td style="padding:.6em;">総合ビューポート & 卒業クイズ</td>
+        </tr>
+        <tr>
+          <td style="padding:.6em;"><strong>補足</strong></td>
+          <td style="padding:.6em;">数学の導出・参考文献</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="quiz-section">
+    <h3>理解度チェック（選択肢）</h3>
+    <div class="quiz-q">Q1. Cook-Torrance BRDF は、何を計算するモデルですか？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt">
+        <input type="radio" id="q1a" name="q1" value="a">
+        <label for="q1a">画面の明るさをランダムに決める方法</label>
+      </div>
+      <div class="quiz-opt">
+        <input type="radio" id="q1b" name="q1" value="b">
+        <label for="q1b"><strong>（正解）この方向からの光は、この方向へどれだけ反射するか</strong></label>
+      </div>
+      <div class="quiz-opt">
+        <input type="radio" id="q1c" name="q1" value="c">
+        <label for="q1c">光が完全に反射する角度を計算する方法</label>
+      </div>
+    </div>
+
+    <div class="quiz-q">Q2. このサイトの「完全理解」の定義に含まれないのはどれですか？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt">
+        <input type="radio" id="q2a" name="q2" value="a">
+        <label for="q2a">パラメータを変えたとき、見た目がどう変わるか予測できる</label>
+      </div>
+      <div class="quiz-opt">
+        <input type="radio" id="q2b" name="q2" value="b">
+        <label for="q2b">GLSL コードと数式の対応が取れる</label>
+      </div>
+      <div class="quiz-opt">
+        <input type="radio" id="q2c" name="q2" value="c">
+        <label for="q2c"><strong>（正解）リアルタイムで複数の環境マップを合成できる</strong></label>
+      </div>
+    </div>
+
+    <div class="quiz-q">Q3. 以下の企業の製品のうち、Cook-Torrance を採用<strong>していない</strong>ものはどれですか？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt">
+        <input type="radio" id="q3a" name="q3" value="a">
+        <label for="q3a">Unreal Engine</label>
+      </div>
+      <div class="quiz-opt">
+        <input type="radio" id="q3b" name="q3" value="b">
+        <label for="q3b">Unity</label>
+      </div>
+      <div class="quiz-opt">
+        <input type="radio" id="q3c" name="q3" value="c">
+        <label for="q3c"><strong>（正解）このサイトには、採用していないものはない（全部採用）</strong></label>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>次のステップ</h2>
+    <p>
+      準備が整いました。次は<strong>数学の基礎</strong>を学びます。
+      「ベクトル」「内積」「積分」は、実は CGでもっともよく使われる3つの概念です。
+      それぞれ、わかりやすい図と、触って理解するウィジェットで進めていきます。
+    </p>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="index.html">← 目次へ戻る</a>
+    <a href="ch01.html">第1章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script>
+(function(){
+  var canvas = document.getElementById("preview");
+  if(!canvas) return;
+  var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+  if(!gl) return;
+  var prog=GLMini.program(gl,SHADERS.vert,SHADERS.frag);
+  var mesh=GLMini.makeSphere(120);
+  function buf(data,t){ var b=gl.createBuffer(); gl.bindBuffer(t,b); gl.bufferData(t,data,gl.STATIC_DRAW); return b; }
+  var pb=buf(mesh.pos,gl.ARRAY_BUFFER), nb=buf(mesh.nrm,gl.ARRAY_BUFFER), ib=buf(mesh.idx,gl.ELEMENT_ARRAY_BUFFER);
+  var L={}; ["aPos","aNrm"].forEach(function(n){L[n]=gl.getAttribLocation(prog,n);});
+  ["uMVP","uModel","uCamPos","uLightDir","uLightPos","uLightIsPoint","uLightColor","uLightInt","uBaseColor","uRough","uMetal","uF0dielectric","uMode"]
+    .forEach(function(n){L[n]=gl.getUniformLocation(prog,n);});
+  gl.enable(gl.DEPTH_TEST);
+  var proj=M4.create(),view=M4.create(),model=M4.create(),mvp=M4.create();
+  var cam=new GLMini.OrbitCam(canvas,{dist:3.2});
+  function resize(){ var dpr=Math.min(window.devicePixelRatio||1,2); canvas.width=canvas.clientWidth*dpr; canvas.height=canvas.clientHeight*dpr; draw(); }
+  var t0=performance.now();
+  function draw(){
+    var w=canvas.width,h=canvas.height; if(!w||!h) return;
+    gl.viewport(0,0,w,h); gl.clearColor(0.024,0.031,0.043,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    M4.perspective(proj,45*Math.PI/180,w/h,0.1,100);
+    cam.yaw=0.6+(performance.now()-t0)*0.0001;
+    var eye=cam.eye(); M4.lookAt(view,eye,[0,0,0],[0,1,0]); M4.mul(mvp,proj,view);
+    gl.useProgram(prog);
+    gl.uniformMatrix4fv(L.uMVP,false,mvp); gl.uniformMatrix4fv(L.uModel,false,model);
+    gl.uniform3fv(L.uCamPos,eye);
+    gl.uniform3fv(L.uLightDir,[0.5,0.6,0.62]); gl.uniform3fv(L.uLightPos,[2,2.4,2.5]);
+    gl.uniform1i(L.uLightIsPoint,0);
+    gl.uniform3fv(L.uLightColor,CT.hex2lin("#fff0d8")); gl.uniform1f(L.uLightInt,3.2);
+    gl.uniform3fv(L.uBaseColor,CT.hex2lin("#d9a441")); gl.uniform1f(L.uRough,0.28);
+    gl.uniform1f(L.uMetal,1.0); gl.uniform1f(L.uF0dielectric,0.04); gl.uniform1i(L.uMode,0);
+    gl.bindBuffer(gl.ARRAY_BUFFER,pb); gl.enableVertexAttribArray(L.aPos); gl.vertexAttribPointer(L.aPos,3,gl.FLOAT,false,0,0);
+    gl.bindBuffer(gl.ARRAY_BUFFER,nb); gl.enableVertexAttribArray(L.aNrm); gl.vertexAttribPointer(L.aNrm,3,gl.FLOAT,false,0,0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.drawElements(gl.TRIANGLES,mesh.idx.length,gl.UNSIGNED_SHORT,0);
+  }
+  function loop(){ draw(); requestAnimationFrame(loop); }
+  window.addEventListener("resize",resize);
+  requestAnimationFrame(function(){ resize(); loop(); });
+})();
+</script>
+</body>
+</html>

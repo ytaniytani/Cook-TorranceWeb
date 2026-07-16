@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第2章 数学の道具箱② 内積とcosθ - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .section-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:start; margin:2em 0; }
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.6; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .readout{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:1em; }
+  .readout-item{ background:var(--panel-2); padding:10px 12px; border-radius:6px; font-family:var(--mono);
+                 font-size:12px; }
+  .readout-item strong{ color:var(--photon); }
+  .chart-container{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; margin:2em 0; }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  @media (max-width:1000px){ .section-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第2章</span>
+    <h1>数学の道具箱② 内積と cosθ</h1>
+    <p class="lead">2つの方向がどれだけ揃っているかを計る「内積」。CGで最も頻出の演算です。</p>
+  </section>
+
+  <section>
+    <h2>角度と cos の直感</h2>
+    <p>
+      数学の教科書では cos（コサイン）は「複雑な関数」に見えるかもしれません。
+      でも CGでは、cos は<strong>「2つのベクトルがどれだけ揃っているか」を測る道具</strong>なのです。
+    </p>
+    <p>
+      例えば、懐中電灯を想像してください：
+    </p>
+    <ul>
+      <li>壁に<strong>垂直に</strong>当てると → 光が強い ← cos(0°) = 1</li>
+      <li>45°斜めに当てると → 光が弱くなる ← cos(45°) ≈ 0.707</li>
+      <li>90°（壁に平行）に当てると → 光が当たらない ← cos(90°) = 0</li>
+      <li>その先（逆向き）に当てると → 負の値 ← cos(120°) = −0.5</li>
+    </ul>
+    <p>
+      つまり、<strong>cos(θ) は「0 から 1 の範囲」で「揃い具合」を表す</strong>のです。
+    </p>
+  </section>
+
+  <section>
+    <h2>cos のグラフ</h2>
+    <p>
+      0° から 180° までの cos を見ると、この関係が一目瞭然です：
+    </p>
+    <div class="chart-container">
+      <canvas id="cos_graph" style="display:block; width:100%; height:300px;"></canvas>
+    </div>
+    <p style="font-size:13px; color:var(--ink-dim); margin-top:.5em;">
+      横軸：角度（度） | 縦軸：cos値（−1 ～ 1）
+    </p>
+  </section>
+
+  <section>
+    <h2>内積（ドット積）の定義</h2>
+    <p>
+      2つのベクトル <span class="var">a</span> = (a₁, a₂, a₃) と <span class="var">b</span> = (b₁, b₂, b₃) があるとき、
+      内積は以下のように計算します：
+    </p>
+    <div class="formula">
+      <strong>a · b = a₁·b₁ + a₂·b₂ + a₃·b₃</strong>
+      <div class="jp">意味：対応する成分どうしを掛けて、全部足す</div>
+    </div>
+    <p>
+      例：<span class="var">a</span> = (1, 2, 3)，<span class="var">b</span> = (4, 5, 6) なら：
+    </p>
+    <div class="formula">
+      <strong>a · b = 1×4 + 2×5 + 3×6 = 4 + 10 + 18 = 32</strong>
+    </div>
+
+    <h3>内積と角度の関係</h3>
+    <p>
+      内積には素晴らしい性質があります。2つのベクトルがともに<strong>正規化されている</strong>（長さ1）なら：
+    </p>
+    <div class="formula">
+      <strong>normalized(a) · normalized(b) = cos(θ)</strong>
+      <div class="jp">意味：正規化されたベクトルの内積は、その間の角の cos になる</div>
+    </div>
+    <p>
+      この性質がCGで最強な理由：
+    </p>
+    <ul>
+      <li>「2つの方向がどれだけ揃っているか」を<strong>1つの数</strong>で表せる</li>
+      <li>その数は <strong>−1 から 1</strong> の範囲</li>
+      <li>計算が<strong>超高速</strong>（成分の掛け算と足し算だけ）</li>
+    </ul>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W2-a: 内積と角度の対話ツール</h3>
+      <p>
+        2本の矢印をドラッグして、角度を変えてみてください。
+        右側に「角度」「cos値」「内積値」が同時に表示されます。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        ベクトルを長くしたり短くしたり、向きを変えたりできます。
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <canvas id="w2a" class="canvas-widget" style="height:400px;"></canvas>
+    <div class="readout" id="w2a_readout">
+      <div class="readout-item">角度: <strong id="w2a_angle">0°</strong></div>
+      <div class="readout-item">cos値: <strong id="w2a_cos">1.000</strong></div>
+      <div class="readout-item">内積値: <strong id="w2a_dot">0.000</strong></div>
+      <div class="readout-item">a·b長さ²: <strong id="w2a_mag">0.000</strong></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>CGで最重要な式：max(0, n·l)</h2>
+    <p>
+      ライトが当たっているかどうかを判定するのに、これを使います：
+    </p>
+    <div class="formula">
+      <strong>brightness = max(0, n · l)</strong>
+      <div class="jp">意味：法線 n とライト方向 l がどれだけ揃っているか（0 以下なら 0）</div>
+    </div>
+    <p>
+      この式の意味：
+    </p>
+    <ul>
+      <li>ライトが表面に<strong>垂直に当たる</strong>（n と l が同じ向き） → n·l = 1 → 明るい</li>
+      <li>斜めから当たる → n·l = 0.5 など（0 ～ 1） → やや暗い</li>
+      <li>ライトが<strong>裏側から当たる</strong>（n と l が逆向き） → n·l < 0 → max(0, ...) = 0 → 暗い（完全に黒）</li>
+    </ul>
+    <p>
+      <code>max(0, ...)</code> は「0 以下なら 0、以上ならそのまま」という意味です。
+      つまり、「裏側は絶対に照らされない」という現実を反映しています。
+    </p>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W2-b: Lambert シェーディング</h3>
+      <p>
+        球体の各点で <span class="var">n·l</span> を計算して、色で可視化したものです。
+        ライト方向を動かすと、どの向きの面が「揃い具合」で明るくなるか、一目瞭然です。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        白い部分：ライトが垂直に当たっている
+        | グレー：斜めから当たっている
+        | 黒い部分：裏側（当たっていない）
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <canvas id="w2b" class="canvas-widget" style="height:400px;"></canvas>
+  </div>
+
+  <section>
+    <h2>内積の3つの計算方法</h2>
+    <p>
+      内積には異なる3つの見方があります。全部同じ値を返しますが、直感が違います：
+    </p>
+
+    <h3>①成分の掛け算の和</h3>
+    <div class="formula">
+      <strong>a · b = a₁b₁ + a₂b₂ + a₃b₃</strong>
+      <div class="jp">コンピュータが実際に計算する形</div>
+    </div>
+
+    <h3>②大きさと角度の関係</h3>
+    <div class="formula">
+      <strong>a · b = |a| · |b| · cos(θ)</strong>
+      <div class="jp">2つのベクトルの「揃い具合」を見る見方</div>
+    </div>
+
+    <h3>③投影（影）の考え方</h3>
+    <p>
+      <span class="var">a</span> を光源とし、<span class="var">b</span> に垂直に光を当てたとき、
+      <span class="var">a</span> の「影の長さ」が内積。
+    </p>
+    <div class="formula">
+      <strong>a · b = |b| × （a を b の方向に投影した長さ）</strong>
+      <div class="jp">ライティングでは、この「影」の概念が大事</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>実装形式（GLSL の例）</h2>
+    <p>
+      シェーダで <span class="var">n·l</span> を計算するコード：
+    </p>
+    <div class="formula">
+      float brightness = max(0.0, dot(normal, lightDir));<br>
+      <span style="color:var(--ink-dim);">// dot = 内積の関数。GLSL では dot(a, b) で a·b を計算</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>内積は「2つのベクトルが揃っているか」を測る演算</li>
+      <li>正規化されたベクトルの内積は cos(θ) に等しい（−1 ～ 1）</li>
+      <li><span class="var">max(0, n·l)</span> は、光が当たっているかどうかを判定する最基本の式</li>
+      <li>内積は CGで超頻出。速く、直感的で、強力</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch01.html">← 第1章へ</a>
+    <a href="ch03.html">第3章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.cosGraph("cos_graph");
+  Widgets.dotProduct("w2a");
+  Widgets.lambertBall("w2b");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第1章 数学の道具箱① ベクトル - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .section-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:start; margin:2em 0; }
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.6; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .readout{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:1em; }
+  .readout-item{ background:var(--panel-2); padding:10px 12px; border-radius:6px; font-family:var(--mono);
+                 font-size:12px; }
+  .readout-item strong{ color:var(--photon); }
+  .section-grid@media (max-width:1000px){ grid-template-columns:1fr; }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第1章</span>
+    <h1>数学の道具箱① ベクトル</h1>
+    <p class="lead">「向きと長さ」を表す矢印、ベクトル。3D空間で光の計算をするなら、ベクトルは必須の道具です。</p>
+  </section>
+
+  <section>
+    <h2>ベクトルとは「矢印」</h2>
+    <p>
+      ベクトルとは、<strong>向きと長さを持つ矢印</strong>のこと。
+      日常で例えるなら：
+    </p>
+    <ul>
+      <li>「北に 10 km」という移動 ← 向き（北）と距離（10 km）</li>
+      <li>「時速 80 km で東へ移動」という速度 ← 向き（東）と速さ（80 km/h）</li>
+    </ul>
+    <p>
+      コンピュータでは、ベクトルを<strong>3つの数 (x, y, z) で表す</strong>ことが多いです。
+      例えば、「東に 3 歩、北に 4 歩、上に 5 歩」なら、<strong>v = (3, 4, 5)</strong> と書きます。
+    </p>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W1-a: ベクトル操作ツール</h3>
+      <p>
+        下のキャンバスで、矢印をドラッグして動かしてみてください。
+        右側に、ベクトルの成分と「長さ」がリアルタイム表示されます。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        左：2D（xy平面）| 右：3D（xyz空間）
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="section-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="widget-box">
+      <canvas id="w1a_2d" class="canvas-widget" style="height:320px;"></canvas>
+    </div>
+    <div class="widget-box">
+      <canvas id="w1a_3d" class="canvas-widget" style="height:320px;"></canvas>
+    </div>
+  </div>
+
+  <section>
+    <h2>ベクトルの4つの基本操作</h2>
+
+    <h3>①足し算と引き算</h3>
+    <p>
+      2つのベクトル <span class="var">a</span> = (1, 2, 3) と <span class="var">b</span> = (2, 1, 1) があるとき：
+    </p>
+    <div class="formula">
+      <strong>a + b = (1+2, 2+1, 3+1) = (3, 3, 4)</strong>
+      <div class="jp">意味：a だけ進んでから b だけ進んだのと同じ（移動の合成）</div>
+    </div>
+    <div class="formula">
+      <strong>a − b = (1−2, 2−1, 3−1) = (−1, 1, 2)</strong>
+      <div class="jp">意味：b の先端から a の先端へ向かうベクトル</div>
+    </div>
+
+    <h3>②スカラー倍（伸び縮み）</h3>
+    <p>
+      ベクトル <span class="var">v</span> = (1, 2, 3) に「2倍」をかけると：
+    </p>
+    <div class="formula">
+      <strong>2 · v = (2, 4, 6)</strong>
+      <div class="jp">意味：同じ方向だが、長さが2倍になった矢印</div>
+    </div>
+
+    <h3>③長さ（ノルム）の計算</h3>
+    <p>
+      ベクトル <span class="var">v</span> = (3, 4) の長さは？
+      3D座標の距離を計算するのと同じ（三平方の定理）：
+    </p>
+    <div class="formula">
+      <strong>|v| = √(3² + 4²) = √(9 + 16) = √25 = 5</strong>
+      <div class="jp">意味：原点から (3, 4) への距離は 5</div>
+    </div>
+    <p>
+      3D の場合も同じ：
+    </p>
+    <div class="formula">
+      <strong>|v| = √(x² + y² + z²)</strong>
+    </div>
+
+    <h3>④正規化（長さを1に統一）</h3>
+    <p>
+      ときどき「方向だけ欲しい」ことがあります。そのときは、長さで割ります：
+    </p>
+    <div class="formula">
+      <strong>normalized(v) = v / |v|</strong>
+      <div class="jp">意味：元のベクトルを、その長さで割ると、方向は同じだが長さが1になる矢印</div>
+    </div>
+    <p>
+      例えば <span class="var">v</span> = (3, 4) で |v| = 5 なら：
+    </p>
+    <div class="formula">
+      <strong>normalized(v) = (3/5, 4/5) = (0.6, 0.8)</strong>
+      <div class="jp">長さは √(0.6² + 0.8²) = √(0.36 + 0.64) = 1 になった</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>CGで使う4つの主要ベクトル</h2>
+    <p>
+      光の計算では、以下の4つのベクトルが出てきます。それぞれ<strong>正規化された方向</strong>です：
+    </p>
+
+    <h3>
+      <span style="color:var(--photon);">●</span> <span class="var">n</span> — 法線ベクトル（Normal）
+    </h3>
+    <p>
+      表面の「向き」を表すベクトル。球の表面なら、その点で「一番外を向いている方向」です。
+      どの点の法線ベクトルを見ても、<strong>長さは1</strong>。
+    </p>
+
+    <h3>
+      <span style="color:var(--spec);">●</span> <span class="var">l</span> — ライト方向（Light direction）
+    </h3>
+    <p>
+      光がどこからやってくるかを示すベクトル。
+      ライトが点 (2, 3, 4) にあり、サーフェス上の点が原点なら、
+      <span class="var">l</span> は「原点から見たライトの方向」。これも<strong>正規化</strong>されています。
+    </p>
+
+    <h3>
+      <span style="color:#7fe3a1;">●</span> <span class="var">v</span> — 視線方向（View direction）
+    </h3>
+    <p>
+      カメラ/目がどこにあるかを示すベクトル。「サーフェス上の点から、カメラへ向かう方向」です。
+      やはり正規化されています。
+    </p>
+
+    <h3>
+      <span style="color:#ffc55a;">●</span> <span class="var">h</span> — ハーフベクトル（Half vector）
+    </h3>
+    <p>
+      「<span class="var">l</span> と <span class="var">v</span> の真ん中の方向」を表します。
+      計算方法は <span class="var">h</span> = normalize(<span class="var">l</span> + <span class="var">v</span>)。
+      光沢のある反射を計算するときに、「ハイライトが出ている角度」を判定するのに使われます。
+    </p>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W1-b: 球体上の四方向</h3>
+      <p>
+        右のミニビューポートで、球体上の任意の点をクリックしてみてください。
+        その点での <span class="var">n</span>（法線）、<span class="var">l</span>（ライト）、<span class="var">v</span>（視線）、<span class="var">h</span>（ハーフ）
+        が矢印で表示されます。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        スライダーでライト方向を動かすと、<span class="var">l</span> が変わり、その結果 <span class="var">h</span> も更新されます。
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <canvas id="w1b" class="canvas-widget" style="height:400px;"></canvas>
+  </div>
+
+  <section>
+    <h2>3つの大事な関係式</h2>
+    <p>
+      これから使う関係式の先取りです。まだ完全に理解する必要はありませんが、「こういう式がある」と覚えておいてください。
+    </p>
+
+    <div class="formula">
+      <strong>h = normalize(l + v)</strong>
+      <div class="jp">ハーフベクトルは、ライト方向と視線方向を足して正規化したもの</div>
+    </div>
+
+    <div class="formula">
+      <strong>l · n = 光がどれだけ当たるか（内積の話は次章）</strong>
+      <div class="jp">ライト方向と法線が揃っていると大きな値、垂直だと0、逆向きだと負</div>
+    </div>
+
+    <div class="formula">
+      <strong>v · h = ハイライトがどれだけ見えるか</strong>
+      <div class="jp">視線とハーフが揃っていると、反射光が目に入る（次の第2章で詳しく）</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>ベクトルは「向きと長さ」を表す矢印</li>
+      <li>足し算・引き算・スカラー倍・正規化の4つの操作が基本</li>
+      <li>CGでは <span class="var">n</span>（法線）、<span class="var">l</span>（ライト）、<span class="var">v</span>（視線）、<span class="var">h</span>（ハーフ）という4つの方向ベクトルが常に登場する</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch00.html">← 第0章へ</a>
+    <a href="ch02.html">第2章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.vectorTool2D("w1a_2d");
+  Widgets.vectorTool3D("w1a_3d");
+  Widgets.vectorBall("w1b");
+})();
+</script>
+</body>
+</html>
