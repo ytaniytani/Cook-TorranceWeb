@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>総合ビューポート — Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html" class="active">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+  <span class="eyebrow">Interactive Viewport</span>
+  <h1>総合ビューポート</h1>
+  <p class="lead">球体をカメラで回し、マテリアルとライトを変えて、Cook-Torrance の反射がどう変わるかを体感します。
+  各章を読み終えると、ここで起きていることが全部わかるようになります。</p>
+
+  <div id="vp" style="margin-top:24px"></div>
+
+  <div class="note column" style="margin-top:24px">
+    <span class="tag">使い方</span>
+    <p style="margin:.3em 0"><strong>回転</strong>：ドラッグ（スマホは1本指）。<strong>ズーム</strong>：ホイール（スマホは2本指ピンチ）。</p>
+    <p style="margin:.3em 0"><strong>表示モード</strong>：右上のボタンで <span class="var">Diffuse</span> / <span class="var">Specular</span> / <span class="var">D</span> / <span class="var">F</span> / <span class="var">G</span> / <span class="var">n·l</span> を単独表示。各項が絵にどう効いているか分離して確認できます。</p>
+    <p style="margin:.3em 0"><strong>ピクセル検査</strong>：球体をクリックすると、その点の内積・D・F・G・最終色まで全計算値が右下に出ます。</p>
+  </div>
+
+  <h2>まずは触ってみる実験</h2>
+  <ul>
+    <li><strong>ラフネスを 0 → 1</strong> に動かす：ハイライトが小さく鋭い点から、大きくぼやけた光へ変わります（第8章 D項）。</li>
+    <li><strong>メタリックを 1</strong> にする：拡散色が消え、金属らしくベースカラーで反射します（第9章 F項）。</li>
+    <li><strong>表示モードを F 項</strong> にして球を回す：縁が明るくなる現象（フレネル）が見えます（第9章）。</li>
+    <li><strong>仰角 el を下げて浅い角度</strong>にする：G項が効いて暗くなる様子（第10章）。</li>
+  </ul>
+
+  <div class="pagenav">
+    <a href="index.html"><span class="lbl">戻る</span>目次へ</a>
+    <a href="index.html"><span class="lbl">次へ</span>第0章 イントロダクション（準備中）</a>
+  </div>
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script>
+  Viewport.mount("#vp", { controls:true, modes:true, readout:true });
+</script>
+</body>
+</html>

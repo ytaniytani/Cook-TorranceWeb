@@ -1,0 +1,249 @@
+/* =========================================================
+   Cook-Torrance 完全理解 — Optical Bench theme
+   依存なし・オフライン動作。フォントはシステムフォントのみ。
+   ========================================================= */
+
+:root{
+  --bg:      #0c0f14;   /* viewport graphite            */
+  --panel:   #141922;   /* panel surface                */
+  --panel-2: #1b222d;   /* raised surface / inputs      */
+  --line:    #2a3340;   /* hairline                     */
+  --line-2:  #384556;
+  --ink:     #e7edf5;   /* primary text                 */
+  --ink-dim: #8c99ab;   /* secondary text               */
+  --ink-mute:#5c6675;   /* tertiary                     */
+  --photon:  #ffc55a;   /* incoming light / warm accent */
+  --photon-d:#c9922f;
+  --spec:    #79d2ff;   /* specular / cool accent       */
+  --good:    #7fe3a1;
+  --bad:     #ff7a7a;
+
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, Menlo, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+
+  --r: 10px;
+  --maxw: 1180px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  line-height:1.75;
+  -webkit-text-size-adjust:100%;
+  font-feature-settings:"palt";
+}
+a{ color:var(--photon); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+
+/* ---------- instrument label / eyebrow (mono) ---------- */
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--photon);
+  display:inline-flex; align-items:center; gap:.6em;
+}
+.eyebrow::before{
+  content:""; width:22px; height:1px; background:var(--photon); opacity:.7;
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(12,15,20,.82);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .inner{
+  max-width:var(--maxw); margin:0 auto; padding:12px 20px;
+  display:flex; align-items:center; gap:16px;
+}
+.brand{
+  font-family:var(--mono); font-size:14px; letter-spacing:.04em;
+  color:var(--ink); display:flex; align-items:baseline; gap:.55em; white-space:nowrap;
+}
+.brand b{ color:var(--photon); font-weight:600; }
+.brand span{ color:var(--ink-mute); }
+.topnav{ margin-left:auto; display:flex; gap:4px; flex-wrap:wrap; }
+.topnav a{
+  font-family:var(--mono); font-size:12.5px; color:var(--ink-dim);
+  padding:6px 10px; border-radius:6px;
+}
+.topnav a:hover{ background:var(--panel-2); color:var(--ink); text-decoration:none; }
+.topnav a.active{ color:var(--photon); background:var(--panel); }
+
+/* ---------- layout containers ---------- */
+.wrap{ max-width:var(--maxw); margin:0 auto; padding:0 20px; }
+.page{ padding:40px 0 96px; }
+section{ margin:0 auto; }
+
+h1,h2,h3{ line-height:1.3; letter-spacing:-.01em; }
+h1{ font-size:clamp(26px,4.4vw,40px); margin:.2em 0 .3em; font-weight:650; }
+h2{ font-size:clamp(20px,3vw,27px); margin:2.4em 0 .6em; font-weight:640;
+    padding-bottom:.35em; border-bottom:1px solid var(--line); }
+h3{ font-size:18px; margin:1.8em 0 .5em; color:var(--ink); font-weight:620; }
+p{ margin:.7em 0; color:var(--ink); }
+.lead{ font-size:18px; color:var(--ink-dim); }
+strong{ color:#fff; font-weight:640; }
+ul,ol{ padding-left:1.3em; }
+li{ margin:.3em 0; }
+code, .k{ font-family:var(--mono); font-size:.92em; color:var(--spec);
+  background:var(--panel-2); padding:.08em .4em; border-radius:5px; }
+
+/* variable chip (n·l 等を本文で示す) */
+.var{ font-family:var(--mono); color:var(--photon); font-weight:600; }
+
+/* ---------- callout / column ---------- */
+.note{
+  border:1px solid var(--line); border-left:3px solid var(--photon);
+  background:var(--panel); border-radius:var(--r);
+  padding:16px 18px; margin:1.4em 0;
+}
+.note .tag{ font-family:var(--mono); font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--photon); display:block; margin-bottom:.4em; }
+.column{ border-left-color:var(--spec); }
+.column .tag{ color:var(--spec); }
+
+/* ---------- viewport shell ---------- */
+.vp-shell{
+  display:grid; grid-template-columns: 1fr 320px; gap:16px;
+  align-items:start;
+}
+.vp-stage{
+  position:relative; background:#06080b;
+  border:1px solid var(--line); border-radius:var(--r);
+  overflow:hidden; aspect-ratio: 4/3; min-height:340px;
+}
+.vp-stage canvas{ display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
+.vp-badge{
+  position:absolute; left:12px; top:12px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.12em;
+  color:var(--ink-dim); background:rgba(6,8,11,.6);
+  border:1px solid var(--line); border-radius:6px; padding:4px 8px;
+  pointer-events:none;
+}
+.vp-hint{
+  position:absolute; right:12px; bottom:12px;
+  font-family:var(--mono); font-size:11px; color:var(--ink-mute);
+  background:rgba(6,8,11,.6); border:1px solid var(--line);
+  border-radius:6px; padding:4px 8px; pointer-events:none;
+}
+
+/* control panel */
+.panel{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r); padding:14px;
+}
+.panel h4{
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-dim);
+  margin:2px 0 12px; font-weight:600;
+}
+.panel h4:not(:first-child){ margin-top:20px; padding-top:14px; border-top:1px solid var(--line); }
+
+/* control row */
+.ctrl{ margin:11px 0; }
+.ctrl .row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; }
+.ctrl label{ font-size:13px; color:var(--ink); }
+.ctrl .val{ font-family:var(--mono); font-size:12.5px; color:var(--photon); }
+
+input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:4px;
+  background:var(--line-2); border-radius:3px; outline:none; margin:6px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:16px; height:16px;
+  border-radius:50%; background:var(--photon); cursor:pointer;
+  border:2px solid #1a130a; box-shadow:0 0 0 1px var(--photon-d);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:var(--photon);
+  cursor:pointer; border:2px solid #1a130a;
+}
+input[type=color]{
+  -webkit-appearance:none; appearance:none; width:100%; height:34px;
+  border:1px solid var(--line-2); border-radius:8px; background:var(--panel-2);
+  cursor:pointer; padding:3px;
+}
+input[type=color]::-webkit-color-swatch-wrapper{ padding:0; }
+input[type=color]::-webkit-color-swatch{ border:none; border-radius:5px; }
+
+/* segmented button group (display mode / light type) */
+.seg{ display:flex; flex-wrap:wrap; gap:6px; }
+.seg button{
+  font-family:var(--mono); font-size:12px; color:var(--ink-dim);
+  background:var(--panel-2); border:1px solid var(--line);
+  border-radius:7px; padding:7px 10px; cursor:pointer; flex:1 1 auto;
+  transition:.12s;
+}
+.seg button:hover{ color:var(--ink); border-color:var(--line-2); }
+.seg button.on{ color:#12160e; background:var(--photon); border-color:var(--photon); font-weight:600; }
+
+.btn{
+  font-family:var(--mono); font-size:12.5px; color:var(--ink);
+  background:var(--panel-2); border:1px solid var(--line-2);
+  border-radius:8px; padding:8px 12px; cursor:pointer; width:100%;
+}
+.btn:hover{ border-color:var(--photon); color:var(--photon); }
+
+/* ---------- readout panel (the signature: instrument math readout) ---------- */
+.readout{
+  margin-top:16px; background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r); overflow:hidden;
+}
+.readout .rhead{
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-dim); padding:11px 14px; border-bottom:1px solid var(--line);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.readout .rhead .dot{ width:7px;height:7px;border-radius:50%;background:var(--ink-mute); }
+.readout .rhead .dot.live{ background:var(--good); box-shadow:0 0 8px var(--good); }
+.rtable{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12.5px; }
+.rtable td{ padding:7px 14px; border-bottom:1px solid var(--panel-2); }
+.rtable tr:last-child td{ border-bottom:none; }
+.rtable .name{ color:var(--ink-dim); }
+.rtable .desc{ color:var(--ink-mute); font-size:11px; }
+.rtable .num{ color:var(--ink); text-align:right; white-space:nowrap; }
+.rtable tr.hl td{ background:rgba(255,197,90,.07); }
+.rtable tr.total .num{ color:var(--photon); font-weight:600; }
+.swatch{ display:inline-block; width:11px;height:11px;border-radius:3px; vertical-align:middle;
+  margin-left:6px; border:1px solid var(--line-2); }
+
+/* ---------- live math formula strip ---------- */
+.formula{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  padding:16px 18px; margin:16px 0; overflow-x:auto;
+}
+.formula .flabel{ font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-dim); margin-bottom:10px; }
+.mrow{ font-family:var(--mono); font-size:15px; color:var(--ink); white-space:nowrap;
+  display:flex; align-items:center; gap:.35em; flex-wrap:wrap; }
+.mrow .op{ color:var(--ink-mute); }
+.mrow .sub{ color:var(--spec); }
+.mrow .lit{ color:var(--photon); }             /* substituted numeric literal */
+.frac{ display:inline-flex; flex-direction:column; text-align:center; vertical-align:middle; }
+.frac .n{ border-bottom:1px solid var(--line-2); padding:0 .5em; }
+.frac .d{ padding:0 .5em; }
+
+/* ---------- footer nav ---------- */
+.pagenav{ display:flex; justify-content:space-between; gap:12px; margin-top:56px;
+  padding-top:22px; border-top:1px solid var(--line); }
+.pagenav a{ font-family:var(--mono); font-size:13px; color:var(--ink-dim);
+  border:1px solid var(--line); border-radius:8px; padding:10px 14px; max-width:48%; }
+.pagenav a:hover{ color:var(--photon); border-color:var(--photon); text-decoration:none; }
+.pagenav .lbl{ display:block; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 860px){
+  .vp-shell{ grid-template-columns:1fr; }
+  h2{ margin-top:1.8em; }
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; }
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .hero{ display:grid; grid-template-columns:1.05fr .95fr; gap:32px; align-items:center; padding:48px 0 24px; }
+  .hero h1{ font-size:clamp(30px,5vw,50px); margin:.15em 0; }
+  .hero .sub{ color:var(--ink-dim); font-size:18px; max-width:34ch; }
+  .cta{ display:inline-flex; gap:.6em; align-items:center; font-family:var(--mono);
+        background:var(--photon); color:#12160e; font-weight:600; padding:12px 18px;
+        border-radius:9px; margin-top:18px; }
+  .cta:hover{ text-decoration:none; filter:brightness(1.05); }
+  .heroview{ aspect-ratio:1/1; }
+  .toc{ margin-top:64px; }
+  .toc-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:18px; }
+  .toc-item{ display:flex; gap:14px; align-items:flex-start; padding:14px 16px;
+    border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+  .toc-item .no{ font-family:var(--mono); font-size:12px; color:var(--photon);
+    border:1px solid var(--line-2); border-radius:6px; padding:2px 7px; margin-top:2px; }
+  .toc-item .t{ font-weight:600; color:var(--ink); }
+  .toc-item .d{ font-size:13px; color:var(--ink-dim); margin-top:2px; }
+  .toc-item.soon{ opacity:.55; }
+  @media (max-width:860px){ .hero{ grid-template-columns:1fr; } .toc-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html" class="active">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section class="hero">
+    <div>
+      <span class="eyebrow">Physically Based Rendering</span>
+      <h1>光の計算を、<br>本当に基礎から。</h1>
+      <p class="sub">ゲームCGの標準 Cook-Torrance（GGX）を、中学数学から一歩ずつ。
+      式の記号ひとつひとつの意味を、触って確かめながら完全に理解します。</p>
+      <a class="cta" href="viewport.html">ビューポートを触ってみる →</a>
+    </div>
+    <div class="vp-stage heroview">
+      <canvas id="hero"></canvas>
+      <div class="vp-badge">Live · GGX</div>
+    </div>
+  </section>
+
+  <section class="toc">
+    <span class="eyebrow">Curriculum</span>
+    <h2 style="border:none;margin-top:.3em">全12章 + 補足</h2>
+    <div class="toc-grid">
+      <a class="toc-item" href="viewport.html"><span class="no">VP</span><div><div class="t">総合ビューポート</div><div class="d">球体・カメラ・ライト・項別表示・ピクセル検査</div></div></a>
+      <div class="toc-item soon"><span class="no">00</span><div><div class="t">イントロダクション</div><div class="d">なぜ数式で光を計算するのか</div></div></div>
+      <div class="toc-item soon"><span class="no">01</span><div><div class="t">数学の道具箱① ベクトル</div><div class="d">向きと長さ・正規化・n, l, v, h</div></div></div>
+      <div class="toc-item soon"><span class="no">02</span><div><div class="t">数学の道具箱② 内積とcos</div><div class="d">向きの揃い具合・n·l</div></div></div>
+      <div class="toc-item soon"><span class="no">03</span><div><div class="t">数学の道具箱③ 全部足す</div><div class="d">積分・半球のイメージ</div></div></div>
+      <div class="toc-item soon"><span class="no">04</span><div><div class="t">反射方程式</div><div class="d">全体の計算式を分解する</div></div></div>
+      <div class="toc-item soon"><span class="no">05</span><div><div class="t">BRDF とは何か</div><div class="d">diffuse + specular</div></div></div>
+      <div class="toc-item soon"><span class="no">06</span><div><div class="t">ディフューズ成分</div><div class="d">Lambert・なぜπで割る</div></div></div>
+      <div class="toc-item soon"><span class="no">07</span><div><div class="t">スペキュラ① 全体像</div><div class="d">マイクロファセット・ハーフベクトル</div></div></div>
+      <div class="toc-item soon"><span class="no">08</span><div><div class="t">スペキュラ② D項 (GGX)</div><div class="d">法線分布・Beckmannコラム</div></div></div>
+      <div class="toc-item soon"><span class="no">09</span><div><div class="t">スペキュラ③ F項</div><div class="d">フレネル・Schlick・metallic</div></div></div>
+      <div class="toc-item soon"><span class="no">10</span><div><div class="t">スペキュラ④ G項</div><div class="d">幾何減衰・Smith</div></div></div>
+      <div class="toc-item soon"><span class="no">11</span><div><div class="t">全体の合成</div><div class="d">エネルギー保存・手計算トレース</div></div></div>
+      <div class="toc-item soon"><span class="no">12</span><div><div class="t">総合ビューポート & 卒業</div><div class="d">GLSL全文・数式⇔コード対応</div></div></div>
+    </div>
+    <p style="color:var(--ink-mute);font-size:13px;margin-top:16px">薄い項目は現在制作中です。ビューポートは今すぐ触れます。</p>
+  </section>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script>
+  // ヒーローは操作可能なライブビュー（コントロールなし・自動で少し回す）
+  var hero = document.getElementById("hero");
+  (function(){
+    var gl = hero.getContext("webgl") || hero.getContext("experimental-webgl");
+    if(!gl){ return; }
+    var prog=GLMini.program(gl,SHADERS.vert,SHADERS.frag);
+    var mesh=GLMini.makeSphere(120);
+    function buf(data,t){ var b=gl.createBuffer(); gl.bindBuffer(t,b); gl.bufferData(t,data,gl.STATIC_DRAW); return b; }
+    var pb=buf(mesh.pos,gl.ARRAY_BUFFER), nb=buf(mesh.nrm,gl.ARRAY_BUFFER), ib=buf(mesh.idx,gl.ELEMENT_ARRAY_BUFFER);
+    var L={}; ["aPos","aNrm"].forEach(function(n){L[n]=gl.getAttribLocation(prog,n);});
+    ["uMVP","uModel","uCamPos","uLightDir","uLightPos","uLightIsPoint","uLightColor","uLightInt","uBaseColor","uRough","uMetal","uF0dielectric","uMode"]
+      .forEach(function(n){L[n]=gl.getUniformLocation(prog,n);});
+    gl.enable(gl.DEPTH_TEST);
+    var proj=M4.create(),view=M4.create(),model=M4.create(),mvp=M4.create();
+    var cam=new GLMini.OrbitCam(hero,{dist:3.2, onChange:draw});
+    function resize(){ var dpr=Math.min(window.devicePixelRatio||1,2); hero.width=hero.clientWidth*dpr; hero.height=hero.clientHeight*dpr; draw(); }
+    var t0=performance.now(), auto=true;
+    hero.addEventListener("mousedown",function(){auto=false;});
+    hero.addEventListener("touchstart",function(){auto=false;});
+    function draw(){
+      var w=hero.width,h=hero.height; if(!w||!h) return;
+      gl.viewport(0,0,w,h); gl.clearColor(0.024,0.031,0.043,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+      M4.perspective(proj,45*Math.PI/180,w/h,0.1,100);
+      var eye=cam.eye(); M4.lookAt(view,eye,[0,0,0],[0,1,0]); M4.mul(mvp,proj,view);
+      gl.useProgram(prog);
+      gl.uniformMatrix4fv(L.uMVP,false,mvp); gl.uniformMatrix4fv(L.uModel,false,model);
+      gl.uniform3fv(L.uCamPos,eye);
+      gl.uniform3fv(L.uLightDir,[0.5,0.6,0.62]); gl.uniform3fv(L.uLightPos,[2,2.4,2.5]);
+      gl.uniform1i(L.uLightIsPoint,0);
+      gl.uniform3fv(L.uLightColor,CT.hex2lin("#fff0d8")); gl.uniform1f(L.uLightInt,3.2);
+      gl.uniform3fv(L.uBaseColor,CT.hex2lin("#d9a441")); gl.uniform1f(L.uRough,0.28);
+      gl.uniform1f(L.uMetal,1.0); gl.uniform1f(L.uF0dielectric,0.04); gl.uniform1i(L.uMode,0);
+      gl.bindBuffer(gl.ARRAY_BUFFER,pb); gl.enableVertexAttribArray(L.aPos); gl.vertexAttribPointer(L.aPos,3,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ARRAY_BUFFER,nb); gl.enableVertexAttribArray(L.aNrm); gl.vertexAttribPointer(L.aNrm,3,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.drawElements(gl.TRIANGLES,mesh.idx.length,gl.UNSIGNED_SHORT,0);
+    }
+    function loop(){ if(auto){ cam.yaw=0.6+(performance.now()-t0)*0.00018; draw(); } requestAnimationFrame(loop); }
+    window.addEventListener("resize",resize);
+    requestAnimationFrame(function(){ resize(); loop(); });
+  })();
+</script>
+</body>
+</html>
