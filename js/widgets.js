@@ -196,6 +196,7 @@
       modes: false,
       readout: false,
       lockMode: null,
+      env: false,   // ベクトル図は照明を固定（環境光なし）
       initial: { baseHex: "#888888", lightHex: "#fff0d8", lightInt: 2.0, rough: 0.5, metal: 0.0, f0d: 0.04 }
     });
   };
@@ -454,6 +455,7 @@
       modes: false,
       readout: false,
       lockMode: null,
+      env: false,   // 1方向ずつ光を足す説明のため環境光なし
       initial: { baseHex: "#333333", lightHex: "#ffffff", lightInt: 1.0, rough: 0.5, metal: 0.0 }
     });
 

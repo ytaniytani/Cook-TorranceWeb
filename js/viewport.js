@@ -19,6 +19,15 @@
   function mount(container, opts){
     opts = opts || {};
     if (typeof container === "string") container = document.querySelector(container);
+    // <canvas> を渡された場合は同じ位置に <div> を作って差し替える
+    // （mount はコンテナ内にシェルを生成するため、canvas 直下だと描画されない）
+    if (container && container.tagName === "CANVAS"){
+      var repl = document.createElement("div");
+      if (container.id) repl.id = container.id;
+      if (container.className) repl.className = container.className;
+      container.parentNode.replaceChild(repl, container);
+      container = repl;
+    }
 
     var state = {
       baseHex: "#c8c8c8",
@@ -30,12 +39,17 @@
       az: 40,   // ライト方位角(deg)
       el: 35,   // ライト仰角(deg)
       isPoint: 0,
-      mode: (opts.lockMode!=null? opts.lockMode : 0)
+      mode: (opts.lockMode!=null? opts.lockMode : 0),
+      env: (opts.env!==undefined ? opts.env : (opts.lockMode!=null ? "none" : "751")),
+      envInt: (opts.envInt!==undefined ? opts.envInt : 1.4),
+      bgBlur: (opts.bgBlur!==undefined ? opts.bgBlur : 0.25)
     };
     if (opts.initial) for (var k in opts.initial) state[k]=opts.initial[k];
 
     /* ---------- DOM 構築 ---------- */
-    var shell = el("div","vp-shell");
+    // 右カラム（controls/readout）を持たないミニビューアは単一カラム表示
+    var solo = (opts.controls===false) && (opts.readout===false);
+    var shell = el("div", solo ? "vp-shell vp-solo" : "vp-shell");
     var stage = el("div","vp-stage");
     var canvas = el("canvas");
     stage.appendChild(canvas);
@@ -47,7 +61,7 @@
     if (opts.controls!==false){
       side.appendChild(buildControls(state, opts));
     }
-    shell.appendChild(side);
+    if (!solo) shell.appendChild(side);
     container.appendChild(shell);
 
     /* ---------- WebGL 初期化 ---------- */
@@ -84,7 +98,8 @@
       draw();
     }
 
-    var proj=M4.create(), view=M4.create(), model=M4.create(), mvp=M4.create();
+    var proj=M4.create(), view=M4.create(), model=M4.create(), mvp=M4.create(), invVP=M4.create();
+    var useEnv = (opts.env!==false) && (typeof IBL!=="undefined");
 
     function draw(){
       var w=canvas.width, h=canvas.height; if(!w||!h) return;
@@ -96,6 +111,13 @@
       var eye=cam.eye();
       M4.lookAt(view, eye, [0,0,0], [0,1,0]);
       M4.mul(mvp, proj, view);
+
+      // 背景（環境マップ）
+      var envOn = useEnv && IBL.available(state.env);
+      if (envOn){
+        M4.invert(invVP, mvp);
+        IBL.drawBackground(gl, state.env, invVP, eye, state.envInt, state.bgBlur);
+      }
 
       gl.useProgram(prog);
       gl.uniformMatrix4fv(loc.uMVP,false,mvp);
@@ -112,6 +134,8 @@
       gl.uniform1f(loc.uMetal, state.metal);
       gl.uniform1f(loc.uF0dielectric, state.f0d);
       gl.uniform1i(loc.uMode, state.mode);
+
+      if (useEnv) IBL.bind(gl, prog, envOn ? state.env : "none", state.envInt);
 
       gl.bindBuffer(gl.ARRAY_BUFFER,pbuf); gl.enableVertexAttribArray(loc.aPos); gl.vertexAttribPointer(loc.aPos,3,gl.FLOAT,false,0,0);
       gl.bindBuffer(gl.ARRAY_BUFFER,nbuf); gl.enableVertexAttribArray(loc.aNrm); gl.vertexAttribPointer(loc.aNrm,3,gl.FLOAT,false,0,0);
@@ -194,6 +218,20 @@
     html += ctrlRange("方位角 az","az",-180,180,1,state.az,"°");
     html += ctrlRange("仰角 el","el",-10,89,1,state.el,"°");
 
+    if (opts.env!==false && opts.lockMode==null){
+      html += "<h4>環境 (IBL)</h4>";
+      html += "<div class='seg' data-seg='env' style='margin-bottom:10px'>";
+      var order = (typeof IBL!=="undefined" && IBL.order && IBL.order.length) ? IBL.order : ["751","758"];
+      var labels = (typeof IBL!=="undefined" && IBL.labels) ? IBL.labels : {};
+      for (var e=0;e<order.length;e++){
+        var key=order[e], lab=labels[key]||key;
+        html += "<button data-env='"+key+"'"+(state.env===key?" class='on'":"")+">"+lab+"</button>";
+      }
+      html += "<button data-env='none'"+(state.env==="none"?" class='on'":"")+">黒</button>";
+      html += "</div>";
+      html += ctrlRange("環境強度","envint",0,4,0.05,state.envInt);
+    }
+
     html += "<h4>ビュー</h4><button class='btn' data-act='resetcam'>カメラをリセット</button>";
 
     p.innerHTML = html;
@@ -217,7 +255,7 @@
     container.querySelectorAll("input[type=range]").forEach(function(inp){
       inp.addEventListener("input", function(){
         var key=inp.getAttribute("data-k"), v=parseFloat(inp.value);
-        var map={rough:"rough",metal:"metal",f0d:"f0d",lint:"lightInt",az:"az",el:"el"};
+        var map={rough:"rough",metal:"metal",f0d:"f0d",lint:"lightInt",az:"az",el:"el",envint:"envInt"};
         state[map[key]]=v;
         var span=container.querySelector("[data-val='"+key+"']");
         var unit=(key==="az"||key==="el")?"°":"";
@@ -247,6 +285,13 @@
       var b=e.target.closest("button[data-lt]"); if(!b) return;
       lt.querySelectorAll("button").forEach(function(x){x.classList.remove("on");});
       b.classList.add("on"); state.isPoint=parseInt(b.getAttribute("data-lt"),10); cb.onAny();
+    });
+    // environment (IBL)
+    var ev=container.querySelector("[data-seg='env']");
+    if(ev) ev.addEventListener("click", function(e){
+      var b=e.target.closest("button[data-env]"); if(!b) return;
+      ev.querySelectorAll("button").forEach(function(x){x.classList.remove("on");});
+      b.classList.add("on"); state.env=b.getAttribute("data-env"); cb.onAny();
     });
     // reset cam
     var rc=container.querySelector("[data-act='resetcam']");

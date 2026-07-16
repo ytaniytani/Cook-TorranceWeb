@@ -78,6 +78,8 @@
 
 <script src="js/glmini.js"></script>
 <script src="js/shaders.js"></script>
+<script src="js/envmap.js"></script>
+<script src="js/ibl.js"></script>
 <script src="js/math.js"></script>
 <script src="js/viewport.js"></script>
 <script>
@@ -94,7 +96,8 @@
     ["uMVP","uModel","uCamPos","uLightDir","uLightPos","uLightIsPoint","uLightColor","uLightInt","uBaseColor","uRough","uMetal","uF0dielectric","uMode"]
       .forEach(function(n){L[n]=gl.getUniformLocation(prog,n);});
     gl.enable(gl.DEPTH_TEST);
-    var proj=M4.create(),view=M4.create(),model=M4.create(),mvp=M4.create();
+    var proj=M4.create(),view=M4.create(),model=M4.create(),mvp=M4.create(),invVP=M4.create();
+    var ENVNAME="758", ENVINT=1.4;
     var cam=new GLMini.OrbitCam(hero,{dist:3.2, onChange:draw});
     function resize(){ var dpr=Math.min(window.devicePixelRatio||1,2); hero.width=hero.clientWidth*dpr; hero.height=hero.clientHeight*dpr; draw(); }
     var t0=performance.now(), auto=true;
@@ -105,6 +108,7 @@
       gl.viewport(0,0,w,h); gl.clearColor(0.024,0.031,0.043,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       M4.perspective(proj,45*Math.PI/180,w/h,0.1,100);
       var eye=cam.eye(); M4.lookAt(view,eye,[0,0,0],[0,1,0]); M4.mul(mvp,proj,view);
+      if(typeof IBL!=="undefined" && IBL.available(ENVNAME)){ M4.invert(invVP,mvp); IBL.drawBackground(gl,ENVNAME,invVP,eye,ENVINT,0.25); }
       gl.useProgram(prog);
       gl.uniformMatrix4fv(L.uMVP,false,mvp); gl.uniformMatrix4fv(L.uModel,false,model);
       gl.uniform3fv(L.uCamPos,eye);
@@ -113,6 +117,7 @@
       gl.uniform3fv(L.uLightColor,CT.hex2lin("#fff0d8")); gl.uniform1f(L.uLightInt,3.2);
       gl.uniform3fv(L.uBaseColor,CT.hex2lin("#d9a441")); gl.uniform1f(L.uRough,0.28);
       gl.uniform1f(L.uMetal,1.0); gl.uniform1f(L.uF0dielectric,0.04); gl.uniform1i(L.uMode,0);
+      if(typeof IBL!=="undefined"){ IBL.bind(gl,prog,ENVNAME,ENVINT); }
       gl.bindBuffer(gl.ARRAY_BUFFER,pb); gl.enableVertexAttribArray(L.aPos); gl.vertexAttribPointer(L.aPos,3,gl.FLOAT,false,0,0);
       gl.bindBuffer(gl.ARRAY_BUFFER,nb); gl.enableVertexAttribArray(L.aNrm); gl.vertexAttribPointer(L.aNrm,3,gl.FLOAT,false,0,0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.drawElements(gl.TRIANGLES,mesh.idx.length,gl.UNSIGNED_SHORT,0);

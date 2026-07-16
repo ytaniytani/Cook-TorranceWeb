@@ -119,6 +119,9 @@ code, .k{ font-family:var(--mono); font-size:.92em; color:var(--spec);
   overflow:hidden; aspect-ratio: 4/3; min-height:340px;
 }
 .vp-stage canvas{ display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
+/* コントロールを持たないミニビューア（章の埋め込み） */
+.vp-shell.vp-solo{ grid-template-columns:1fr; }
+.vp-shell.vp-solo .vp-stage{ aspect-ratio:auto; height:400px; min-height:0; }
 .vp-badge{
   position:absolute; left:12px; top:12px;
   font-family:var(--mono); font-size:11px; letter-spacing:.12em;
