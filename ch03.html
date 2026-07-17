@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第3章 数学の道具箱③ 積分と半球 - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .section-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:start; margin:2em 0; }
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.6; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .readout{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:1em; }
+  .readout-item{ background:var(--panel-2); padding:10px 12px; border-radius:6px; font-family:var(--mono);
+                 font-size:12px; }
+  .readout-item strong{ color:var(--photon); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  @media (max-width:1000px){ .section-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第3章</span>
+    <h1>数学の道具箱③ 全部足す ＝ 積分と半球</h1>
+    <p class="lead">光は「あらゆる方向から」やってきます。その「全部足す」という計算が積分。難しくありません。</p>
+  </section>
+
+  <section>
+    <h2>積分の本質は「細かく分けて足す」</h2>
+    <p>
+      積分という言葉は難しく聞こえるかもしれません。
+      でも実は、<strong>「細かく分けて、全部足し合わせる」</strong>という、とてもシンプルな概念です。
+    </p>
+    <p>
+      例えば、「テレビの画面全体の明るさ」を計りたいとします。
+      テレビ画面は何千万ものピクセルから成り立っています。
+      各ピクセルの明るさを全部足せば、「全体の明るさ」がわかります。
+    </p>
+    <p>
+      <strong>積分 ≈ 「細かい部分に分割して、全部足し合わせる」</strong>
+    </p>
+    <p>
+      数式では、以下のように書きます：
+    </p>
+    <div class="formula">
+      ∫ f(x) dx
+      <div class="jp">意味：関数 f を、細かく分割して全部足した結果</div>
+    </div>
+    <p>
+      実際には、分割を限界まで細かくするので、「合計」が「連続」に見えるようになるのです。
+    </p>
+  </section>
+
+  <section>
+    <h2>半球と立体角</h2>
+    <p>
+      3D CGでは、「ある点の周りにどんな光が来ているか」を計算することがよくあります。
+      その点から見ると、<strong>光は「半球」のあらゆる方向からやってきます</strong>。
+      （地面の上に立つと、上半分の空から光が来る、という感じ）
+    </p>
+    <p>
+      2D では「円周（角度 0° ～ 360°）」を足し合わせ、
+      3D では「半球（全方向）」を足し合わせます。
+    </p>
+    <p>
+      半球全体の「立体角」は数学的には 2π（約 6.28）と定義されています。
+      （詳しくは補足に隔離していますが、ここでは「半球の"広さ"」という直感だけで十分）
+    </p>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W3-a: 半球の分割と積分</h3>
+      <p>
+        下のスライダーで「分割数」を変えてみてください。
+        少ない分割では粗く、分割を増やすと滑らかになります。
+        これが「積分に近づいていく」という概念です。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        各スライスの「面積」（立体角）が表示されます。
+        全部足すと 2π に近づきます。
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <canvas id="w3a" class="canvas-widget" style="height:400px;"></canvas>
+    <div style="margin-top:1em;">
+      <label>分割数: <input type="range" id="w3a_divisions" min="2" max="64" value="4" style="vertical-align:middle;"></label>
+      <div class="readout" style="margin-top:.8em;">
+        <div class="readout-item">分割数: <strong id="w3a_div_count">4</strong></div>
+        <div class="readout-item">1スライスの立体角: <strong id="w3a_slice_omega">0.000</strong></div>
+        <div class="readout-item">全体の合計: <strong id="w3a_total">0.000</strong></div>
+        <div class="readout-item">理論値 2π: <strong id="w3a_theory">6.283</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>反射方程式では「半球積分」を使う</h2>
+    <p>
+      光の計算で最も基本的な式が「レンダリング方程式」（反射方程式）です：
+    </p>
+    <div class="formula">
+      Lo(v) = ∫<sub>Ω</sub> f(l, v) · Li(l) · (n·l) dω
+      <div class="jp">意味：半球全体（Ω）の全方向について、反射の寄与を足し合わせたもの</div>
+    </div>
+    <p>
+      各記号の意味（詳しくは第4章）：
+    </p>
+    <ul>
+      <li><span class="var">Lo(v)</span>：カメラへ向かう出ていく光の量（＝ピクセルの色）</li>
+      <li><span class="var">∫<sub>Ω</sub> ... dω</span>：半球全体を積分する（全方向の光を足す）</li>
+      <li><span class="var">f(l, v)</span>：BRDF（材質の反射特性）</li>
+      <li><span class="var">Li(l)</span>：その方向からやってくる光の量</li>
+      <li><span class="var">(n·l)</span>：斜めからの光は薄まる</li>
+    </ul>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W3-b: 半球上の光源の寄与</h3>
+      <p>
+        右のミニビューアで、半球上の各方向から光がやってくると考えてください。
+        「Play」ボタンをクリックすると、各方向の光を1つずつ足していくアニメーションが始まります。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        どの方向から光が来ると、球体が明るくなるか観察してみます。
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <canvas id="w3b" class="canvas-widget" style="height:400px;"></canvas>
+    <div style="margin-top:1em; text-align:center;">
+      <button id="w3b_play" style="padding:8px 16px; background:var(--photon); color:#000; border:none; border-radius:6px; font-weight:600; cursor:pointer;">
+        Play
+      </button>
+      <span style="margin-left:1em; color:var(--ink-dim);">
+        進捗: <strong id="w3b_progress">0%</strong>
+      </span>
+    </div>
+  </div>
+
+  <section>
+    <h2>ゲームでは「ポイントライト」で近似</h2>
+    <p>
+      リアルタイムゲームで環境全体の半球積分を計算するのは<strong>非常に重い</strong>処理です。
+      そのため、ほとんどのゲームでは、<strong>「限定された方向から光が来る」と仮定</strong>します。
+    </p>
+    <p>
+      例えば、<strong>「ポイントライト（点光源）1灯」</strong>の場合：
+    </p>
+    <div class="formula">
+      <strong>Lo = f(l, v) · Lc · (n·l)</strong>
+      <div class="jp">意味：特定の1方向（ライト）からだけ来ると仮定して、積分を消した形</div>
+    </div>
+    <p>
+      <span class="var">Lc</span> はライトの色と強度。「その方向からいくら光が来るか」を直接指定します。
+    </p>
+    <p>
+      <strong>このサイトの実装は、この形を採用</strong>しています。
+      完全な半球積分（IBL/環境マップ）は、第11章の補足で触れます。
+    </p>
+  </section>
+
+  <section>
+    <h2>分割数と計算コスト</h2>
+    <p>
+      実装では、「半球を何分割するか」で計算コストが決まります：
+    </p>
+    <table style="width:100%; margin-top:1em; border-collapse:collapse;">
+      <thead>
+        <tr style="background:var(--panel-2); border-bottom:1px solid var(--line);">
+          <th style="padding:.6em; text-align:left;">分割数</th>
+          <th style="padding:.6em; text-align:left;">精度</th>
+          <th style="padding:.6em; text-align:left;">用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>1</strong>（積分なし）</td>
+          <td style="padding:.6em;">最低</td>
+          <td style="padding:.6em;">ポイントライト（ゲーム標準）</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>16 ～ 64</strong></td>
+          <td style="padding:.6em;">中程度</td>
+          <td style="padding:.6em;">リアルタイムレンダリング（モバイル）</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><strong>256 ～ 1024</strong></td>
+          <td style="padding:.6em;">高</td>
+          <td style="padding:.6em;">高品質リアルタイム（コンソール）</td>
+        </tr>
+        <tr>
+          <td style="padding:.6em;"><strong>10000+</strong></td>
+          <td style="padding:.6em;">最高</td>
+          <td style="padding:.6em;">オフラインレンダリング（映画など）</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>積分は「細かく分けて足す」という意味。難しい概念ではない</li>
+      <li>3Dでは「半球」全体の方向から光が来ると考える</li>
+      <li>実装では「分割数」を増やすほど精度が上がり、コストが増える</li>
+      <li>ゲームではコスト削減のため「ポイントライト1灯」で近似することがほとんど</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch02.html">← 第2章へ</a>
+    <a href="ch04.html">第4章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/envmap.js"></script>
+<script src="js/ibl.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.hemisphereIntegral("w3a");
+  Widgets.lightContribution("w3b");
+})();
+</script>
+</body>
+</html>

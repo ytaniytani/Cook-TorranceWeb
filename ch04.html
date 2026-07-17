@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第4章 反射方程式 - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .section-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:start; margin:2em 0; }
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .formula-term{ display:block; margin:.6em 0; padding-left:1.5em; }
+  .readout{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:1em; }
+  .readout-item{ background:var(--panel-2); padding:10px 12px; border-radius:6px; font-family:var(--mono);
+                 font-size:12px; }
+  .readout-item strong{ color:var(--photon); }
+  .equation-highlight{ background:var(--photon); color:#000; padding:2px 6px; border-radius:4px; cursor:pointer;
+                       font-weight:600; }
+  .equation-highlight:hover{ opacity:.8; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  @media (max-width:1000px){ .section-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第4章</span>
+    <h1>反射方程式（レンダリング方程式の反射項）</h1>
+    <p class="lead">前の3章で学んだ「ベクトル」「内積」「積分」が全て合流する瞬間。光の計算の全体像です。</p>
+  </section>
+
+  <section>
+    <h2>反射方程式の完全な式</h2>
+    <p>
+      3Dグラフィックスで「ある点から見た色」を計算するのに、以下の式が基本です：
+    </p>
+    <div class="formula">
+      <strong>Lo(v) = ∫<sub>Ω</sub> f(l, v) · Li(l) · (n·l) dω</strong>
+      <div class="jp">意味：半球全体（Ω）の全方向について、反射の寄与を足し合わせたもの</div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:13px; margin-top:.5em;">
+      （Lo は「Leaving」の L、つまり「出ていく光」）
+    </p>
+  </section>
+
+  <section>
+    <h2>各記号の完全分解</h2>
+
+    <h3>Lo(v) — カメラに向かう光の量</h3>
+    <p>
+      <span class="var">Lo</span> は「出ていく光」の量（放射輝度）。
+      つまり、<strong>カメラの目に入ってくる光の量</strong> = <strong>画面に表示される色の明るさ</strong>です。
+    </p>
+    <p>
+      RGB の 3 成分それぞれについて計算するので、
+      <span class="var">Lo</span> も RGB の 3 つの値を返します。
+    </p>
+
+    <h3>∫<sub>Ω</sub> ... dω — 半球積分</h3>
+    <p>
+      「半球全体（Ω）」の「全方向」について「足し合わせる」という意味。
+      第3章で学んだ「積分」がここに登場します。
+    </p>
+
+    <h3>f(l, v) — BRDF（双方向反射率分布関数）</h3>
+    <p>
+      BRDF は「この方向 <span class="var">l</span> からの光が、この方向 <span class="var">v</span> へどれだけ返されるか」という関数。
+      <strong>材質の性質そのもの</strong>です。第5章以降で詳しく学びます。
+    </p>
+    <div class="callout">
+      <strong>Cook-Torrance はこの BRDF の一種</strong>。
+      「このモデルを使うと、金属や樹脂のリアルな見た目が出る」という特徴があります。
+    </div>
+
+    <h3>Li(l) — その方向からやってくる光の量</h3>
+    <p>
+      「方向 <span class="var">l</span> からいくら光がやってくるか」という入力値。
+      例えば、太陽からの光、照明からの光、空からの散乱光など。
+    </p>
+
+    <h3>(n·l) — 斜めからの光は薄まる</h3>
+    <p>
+      第2章で学んだ内積です。ライト方向と法線がどれだけ揃っているか。
+    </p>
+    <ul>
+      <li>垂直に当たる（n·l ≈ 1） → 全部入ってくる</li>
+      <li>斜めから当たる（n·l ≈ 0.5） → 半分しか入らない</li>
+      <li>裏側から当たる（n·l < 0） → 当たらない</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>ゲームでの簡略化：ポイントライト1灯</h2>
+    <p>
+      半球積分を毎フレーム計算するのは重いため、ゲームでは<strong>「限定された方向からだけ光が来る」と仮定</strong>します。
+      最も単純なのが「<strong>ポイントライト（点光源）1灯</strong>」の場合：
+    </p>
+    <div class="formula">
+      <strong>Lo = f(l, v) · Lc · (n·l)</strong>
+      <div class="jp">意味：積分が消えて、特定の1方向での式に</div>
+    </div>
+    <p>
+      ここで：
+    </p>
+    <ul>
+      <li><span class="var">f(l, v)</span> — BRDF（同じ）</li>
+      <li><span class="var">Lc</span> — ライトの色と強度（直接指定）</li>
+      <li><span class="var">(n·l)</span> — 斜め補正（同じ）</li>
+    </ul>
+    <p style="color:var(--good); font-weight:600; margin-top:1em;">
+      ※ このサイトの実装は、この簡略版を採用しています。
+    </p>
+  </section>
+
+  <section class="section-grid">
+    <div>
+      <h3>W4-a: 反射方程式の分解ビューア</h3>
+      <p>
+        下の式に出てくる項をクリックしてみてください。
+        その項の意味と、右のビューポートで対応する部分がハイライトされます。
+      </p>
+      <p style="font-size:13px; color:var(--ink-dim); margin-top:1em;">
+        ビューポート上の球体や矢印が、式の各項に対応していることが一目瞭然です。
+      </p>
+    </div>
+    <div></div>
+  </section>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <div style="padding:20px; background:var(--panel-2); border-radius:8px; margin-bottom:1.5em; font-family:var(--mono); line-height:2;">
+      <strong style="color:var(--ink);">ポイントライト版（ゲーム標準）</strong><br>
+      Lo = <span class="equation-highlight" data-term="brdf">f(l,v)</span>
+        · <span class="equation-highlight" data-term="light">Lc</span>
+        · <span class="equation-highlight" data-term="ndotl">max(0, n·l)</span>
+    </div>
+
+    <div style="padding:20px; background:var(--panel-2); border-radius:8px; font-family:var(--mono); line-height:2; font-size:13px; color:var(--ink-dim);">
+      <strong style="color:var(--ink);">完全版（環境全体）</strong><br>
+      Lo(v) = ∫<sub>Ω</sub>
+        <span class="equation-highlight" data-term="brdf2">f(l,v)</span>
+        · <span class="equation-highlight" data-term="input">Li(l)</span>
+        · <span class="equation-highlight" data-term="ndotl2">(n·l)</span> dω
+    </div>
+  </div>
+
+  <div class="widget-box" style="margin:2em 0;">
+    <canvas id="w4a" class="canvas-widget" style="height:400px;"></canvas>
+    <div style="margin-top:1.5em; padding:16px; background:var(--panel-2); border-radius:8px;">
+      <strong style="color:var(--photon);">クリックした項の説明：</strong>
+      <div id="w4a_explanation" style="margin-top:.8em; color:var(--ink-dim); line-height:1.7;">
+        各項をクリックすると説明が表示されます
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>各項の役割と関連章</h2>
+    <table style="width:100%; margin-top:1em; border-collapse:collapse;">
+      <thead>
+        <tr style="background:var(--panel-2); border-bottom:1px solid var(--line);">
+          <th style="padding:.6em; text-align:left; font-weight:600;">項</th>
+          <th style="padding:.6em; text-align:left; font-weight:600;">意味</th>
+          <th style="padding:.6em; text-align:left; font-weight:600;">詳しい章</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><span class="var">f(l, v)</span></td>
+          <td style="padding:.6em;">材質のふるまい（BRDF）</td>
+          <td style="padding:.6em;">第5〜11章</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:.6em;"><span class="var">Li(l)</span> / <span class="var">Lc</span></td>
+          <td style="padding:.6em;">光源からの光の強さ・色</td>
+          <td style="padding:.6em;">パラメータ（ライト設定）</td>
+        </tr>
+        <tr>
+          <td style="padding:.6em;"><span class="var">(n·l)</span></td>
+          <td style="padding:.6em;">斜めからの光の減衰</td>
+          <td style="padding:.6em;">第2章（内積の復習）</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>次のステップ：BRDF の詳細へ</h2>
+    <p>
+      第0〜4章で、光の計算の「全体像」が見えました。
+      次は、<span class="var">f(l, v)</span> という BRDF の正体に潜り込みます。
+    </p>
+    <p>
+      <strong>Cook-Torrance BRDF</strong> は以下のように分解されます：
+    </p>
+    <div class="formula">
+      <strong>f = kd · f_diffuse + f_specular</strong>
+      <div class="jp">意味：ディフューズ（内部散乱）とスペキュラ（反射光）の合成</div>
+    </div>
+    <p>
+      各部分は、さらに細かい項に分解されます：
+    </p>
+    <div class="formula">
+      <strong>f_specular = D · F · G / (4 · (n·l) · (n·v))</strong>
+      <div class="jp">意味：微細な鏡による反射モデル（マイクロファセット理論）</div>
+    </div>
+    <p>
+      <strong>D, F, G</strong> はそれぞれ以下の3つの関数：
+    </p>
+    <ul>
+      <li><span class="var">D</span>（法線分布 / GGX） — 「表面のギザギザの向きの分布」</li>
+      <li><span class="var">F</span>（フレネル） — 「浅い角度では何でも鏡になる」現象</li>
+      <li><span class="var">G</span>（幾何減衰） — 「凸凹による影」</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>シェーダ実装の入口</h2>
+    <p>
+      実装では、この式を GLSL で書きます。次は、その時点での GLSL コードの読み方を学びます。
+      （実装の詳細は第5〜11章で見ていきます）
+    </p>
+    <div class="formula">
+      <strong style="color:var(--spec);">// ポイントライト版</strong><br>
+      vec3 Lo = brdf(l, v, normal, metallic, roughness)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* lightColor<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* max(0.0, dot(normal, lightDir));<br>
+    </div>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>反射方程式は「入ってくる光」を「BRDF」で「変換」して「出ていく光」を得る式</li>
+      <li>式の3つの項：BRDF（材質）、光源（入力）、斜め補正（幾何学）</li>
+      <li>ゲームでは計算コストを減らすため「ポイントライト1灯」で近似</li>
+      <li>BRDF（Cook-Torrance）は、さらに細かい関数 D, F, G に分解される</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch03.html">← 第3章へ</a>
+    <a href="ch05.html">第5章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/envmap.js"></script>
+<script src="js/ibl.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.reflectionEquation("w4a");
+})();
+</script>
+</body>
+</html>

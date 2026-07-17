@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第7章 マイクロファセット理論 - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .dfg{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:1.2em 0; }
+  .dfg .card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .dfg .card b{ font-family:var(--mono); color:var(--photon); font-size:18px; }
+  .dfg .card .d{ font-size:13px; color:var(--ink-dim); margin-top:.4em; }
+  @media (max-width:860px){ .dfg{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第7章</span>
+    <h1>スペキュラ成分①: マイクロファセット理論と全体像</h1>
+    <p class="lead">Cook-Torrance の心臓部。「表面は微細な鏡の集合体である」という一つのアイデアから、式の全体像を掴みます。</p>
+  </section>
+
+  <section>
+    <h2>式の全体像（まずは眺めるだけ）</h2>
+    <div class="formula">
+      <strong>f<sub>specular</sub> = D(h) · F(v,h) · G(l,v,h) / (4 · (n·l) · (n·v))</strong>
+      <div class="jp">意味：3つの関数の掛け算 ÷ 補正項。D, F, G の中身は第8〜10章でひとつずつ</div>
+    </div>
+    <p>
+      いま覚えることはひとつだけ：<strong>スペキュラは D × F × G の掛け算</strong>。
+      3人の担当者がそれぞれの事情で光を減らしたり増やしたりし、その合議で最終的な反射量が決まります。
+    </p>
+  </section>
+
+  <section>
+    <h2>表面は「微細な鏡の集合体」</h2>
+    <p>
+      肉眼では滑らかに見える表面も、顕微鏡レベルでは無数の微小な面——
+      <strong>マイクロファセット（microfacet）</strong>——のギザギザでできています。
+      各マイクロファセットは<em>完璧な鏡</em>だと考えます。
+    </p>
+    <ul>
+      <li>ギザギザが少ない（roughness 小）→ 鏡たちの向きが揃う → 反射方向が揃う → <strong>鋭いハイライト</strong></li>
+      <li>ギザギザが多い（roughness 大）→ 鏡たちの向きがバラバラ → 反射方向が散る → <strong>ぼやけたハイライト</strong></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>W7-a: 凸凹断面シミュレータ</h2>
+    <p>
+      表面の断面図に平行光を当てたときの反射の様子です。
+      roughness を動かすと表面のギザギザが変わり、
+      <span class="var">黄色</span>（入射）が<span style="color:var(--spec);font-weight:600">青</span>（反射）として散っていく方向が変化します。
+    </p>
+    <div class="widget-box">
+      <canvas id="w7a" class="canvas-widget" style="height:340px;"></canvas>
+      <div class="ctrl"><div class="row"><label>ラフネス roughness</label><span class="val" id="w7a_rough_val">0.40</span></div>
+        <input type="range" id="w7a_rough" min="0" max="1" step="0.01" value="0.4"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>ハーフベクトル h の本当の役割</h2>
+    <p>
+      第1章で登場した <span class="var">h</span> = normalize(l + v) がここで主役になります。
+    </p>
+    <div class="callout">
+      <strong>「向きがちょうど h と一致しているマイクロファセットだけが、光を l から v へ反射できる」</strong><br>
+      鏡は「入射角＝反射角」でしか反射しません。l から来た光を v へ届けられる鏡の向きは、
+      幾何学的に l と v のちょうど中間——つまり h ただ一つです。
+    </div>
+    <p>
+      だからスペキュラの計算は「<strong>表面の中に、h を向いた鏡がどれくらいあるか？</strong>」という
+      在庫調べの問題に置き換わります。それを担当するのが次章の D です。
+    </p>
+  </section>
+
+  <section>
+    <h2>D・F・G の担当分け</h2>
+    <div class="dfg">
+      <div class="card"><b>D</b> 法線分布
+        <div class="d">h を向いたマイクロファセットの「割合」。ハイライトの形と鋭さを決める。→ 第8章</div></div>
+      <div class="card"><b>F</b> フレネル
+        <div class="d">その鏡が実際に反射する「反射率」。浅い角度ほど強く反射する。→ 第9章</div></div>
+      <div class="card"><b>G</b> 幾何減衰
+        <div class="d">凸凹どうしが光を「遮る」ぶんの目減り。浅い角度＋粗い面で効く。→ 第10章</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>分母 4(n·l)(n·v) は「単位合わせ」</h2>
+    <p>
+      分母の <span class="k">4 · (n·l) · (n·v)</span> は、マイクロファセットの世界（h 基準）で数えた光を、
+      面全体の世界（n 基準）の BRDF に換算するための<strong>補正項（単位合わせ）</strong>です。
+      導出は補足章に譲り、本文では「そういう換算係数が要る」とだけ覚えれば十分です。
+    </p>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>表面は微小な完璧鏡（マイクロファセット）の集合体と考える</li>
+      <li>l → v へ反射できるのは、向きが h と一致した鏡だけ</li>
+      <li>スペキュラ = D（在庫）× F（反射率）× G（遮蔽）÷ 補正項</li>
+      <li>次章は D。GGX という「在庫の数えかた」を1ステップずつ計算する</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch06.html">← 第6章へ</a>
+    <a href="ch08.html">第8章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/math.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.microfacet2D("w7a");
+})();
+</script>
+</body>
+</html>
