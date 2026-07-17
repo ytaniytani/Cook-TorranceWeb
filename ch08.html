@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第8章 D項 法線分布関数 GGX - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .column-box{ border:1px solid var(--spec); border-radius:10px; padding:20px 22px; margin:2.5em 0; background:var(--panel); }
+  .column-box .tag{ font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+                    color:var(--spec); display:block; margin-bottom:.6em; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第8章</span>
+    <h1>スペキュラ成分②: D項（法線分布関数 / GGX）</h1>
+    <p class="lead">「h を向いた鏡はどれくらいあるか？」を答える関数。roughness がハイライトの形を決める仕組みが、ここで明らかになります。</p>
+  </section>
+
+  <section>
+    <h2>式</h2>
+    <div class="formula">
+      <strong>D<sub>GGX</sub>(h) = α² / ( π · ( (n·h)²·(α²−1) + 1 )² )</strong><br>
+      <strong style="color:var(--spec)">α = roughness²</strong>
+      <div class="jp">意味：マイクロファセットの向きが h と揃っている「密度」。n·h が1（完全に揃う）に近いほど大きい</div>
+    </div>
+    <p>
+      入力は2つだけ。<span class="var">n·h</span>（面の法線とハーフベクトルの揃い具合、第2章の内積）と、
+      <span class="var">α</span>（roughness の2乗）です。
+    </p>
+    <div class="callout">
+      <strong>なぜ α = roughness² ？</strong>
+      スライダーの roughness をそのまま使うと、変化が 0 付近に偏って操作しづらいためです。
+      2乗してから使うと、スライダー全域で見た目が均等に変化します（Disney/UE4 以来の業界慣習）。
+    </div>
+  </section>
+
+  <section>
+    <h2>電卓で1ステップずつ追う</h2>
+    <p>
+      式は分解すれば四則演算だけです。スライダーを動かすと、途中の値がすべて連動して更新されます。
+    </p>
+    <div class="widget-box">
+      <div class="ctrl"><div class="row"><label>n と h のなす角</label><span class="val" id="w8calc_ang_val">20</span></div>
+        <input type="range" id="w8calc_ang" min="0" max="90" step="1" value="20"></div>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w8calc_rough_val">0.40</span></div>
+        <input type="range" id="w8calc_rough" min="0.05" max="1" step="0.01" value="0.4"></div>
+      <table class="rtable" style="margin-top:12px">
+        <tr><td class="name">① n·h = cos(角度)<div class="desc">内積（第2章）</div></td><td class="num" id="w8c_noh">—</td></tr>
+        <tr><td class="name">② α = roughness²</td><td class="num" id="w8c_a">—</td></tr>
+        <tr><td class="name">③ α²</td><td class="num" id="w8c_a2">—</td></tr>
+        <tr><td class="name">④ d = (n·h)²·(α²−1) + 1<div class="desc">分母の中身</div></td><td class="num" id="w8c_d">—</td></tr>
+        <tr class="total"><td class="name">⑤ D = α² / (π·d²)</td><td class="num" id="w8c_D">—</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>W8-a: D 関数のグラフ</h2>
+    <p>
+      横軸は n と h のなす角、縦軸は D の値。roughness を動かすと、
+      山の<strong>鋭さ（＝ハイライトの締まり）</strong>がどう変わるかを観察してください。
+    </p>
+    <div class="widget-box">
+      <canvas id="w8a" class="canvas-widget" style="height:300px;"></canvas>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w8a_rough_val">0.40</span></div>
+        <input type="range" id="w8a_rough" min="0.05" max="1" step="0.01" value="0.4"></div>
+    </div>
+    <ul>
+      <li>roughness 小 → 0° 付近だけ極端に高い針状の山 → 小さく鋭いハイライト</li>
+      <li>roughness 大 → 低くなだらかな山 → 大きくぼやけたハイライト</li>
+      <li><strong>GGX の個性は「裾（すそ）の長さ」</strong>。山のふもとがゼロに落ちきらず遠くまで残る
+        → ハイライトの外側にふわっとした「光の尾」が出る</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>W8-b: 球体で D 項だけを見る</h2>
+    <p>
+      D 項だけを白黒表示した球体です。グラフの「山」が、球体上では「ハイライトの白い領域」として現れます。
+    </p>
+    <div class="widget-box">
+      <div id="w8b"></div>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w8b_rough_val">0.35</span></div>
+        <input type="range" id="w8b_rough" min="0.05" max="1" step="0.01" value="0.35"></div>
+    </div>
+  </section>
+
+  <div class="column-box">
+    <span class="tag">コラム</span>
+    <h3 style="margin-top:0">オリジナルの Cook-Torrance は GGX ではない（Beckmann 分布）</h3>
+    <p>
+      1982年の Cook &amp; Torrance の原論文では、D に <strong>Beckmann 分布</strong>が使われていました：
+    </p>
+    <div class="formula">
+      <strong>D<sub>Beckmann</sub>(h) = exp( ((n·h)² − 1) / (m²·(n·h)²) ) / ( π · m² · (n·h)⁴ )</strong>
+      <div class="jp">m は表面の粗さ。exp は「入力が 0 から離れるほど急激に小さくなる関数」という直感でOK（中学数学の範囲外なので詳細は割愛）</div>
+    </div>
+    <p>
+      その後、2007年に Walter らが GGX（＝Trowbridge-Reitz, 1975年の再発見）を提唱し、
+      現在のゲームCG（UE・Unity・Substance）では GGX が事実上の標準になりました。
+    </p>
+    <p>
+      <strong>なぜ GGX が勝ったのか？ 答えは「裾」です。</strong>
+      Beckmann はハイライトの周囲が急激に暗くなりますが、GGX はぼんやりした光の尾を長く残します。
+      実測データや実物の見た目に近いのは GGX でした。
+    </p>
+
+    <h3>W8-c: GGX vs Beckmann 比較グラフ</h3>
+    <p>同じ roughness で2つの分布を重ねています。<strong>山のふもと（裾）の高さの違い</strong>に注目：</p>
+    <div class="widget-box">
+      <canvas id="w8cg" class="canvas-widget" style="height:300px;"></canvas>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w8cg_rough_val">0.40</span></div>
+        <input type="range" id="w8cg_rough" min="0.05" max="1" step="0.01" value="0.4"></div>
+    </div>
+
+    <h3>W8-d: 球体で見た目を比較</h3>
+    <p>D 表示モードの球体で GGX / Beckmann をトグル切替できます（本サイトの実装は GGX に固定。これは確認用）：</p>
+    <div class="widget-box">
+      <div class="seg" style="margin-bottom:14px">
+        <button data-w8d="ggx" class="on">GGX（現在の標準）</button>
+        <button data-w8d="beck">Beckmann（1982年原論文）</button>
+      </div>
+      <div id="w8d"></div>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w8d_rough_val">0.35</span></div>
+        <input type="range" id="w8d_rough" min="0.05" max="1" step="0.01" value="0.35"></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:13px;">
+      「Cook-Torrance モデル」という言葉は、現在では <span class="k">D·F·G/(4(n·l)(n·v))</span> という
+      <strong>マイクロファセットの枠組み全体</strong>を指し、D に何を入れるかは実装依存——という理解が実務上正しいです。
+    </p>
+  </div>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>D は「h を向いたマイクロファセットの密度」。ハイライトの形と鋭さを決める</li>
+      <li>α = roughness²。スライダーの効きを均等にするための業界慣習</li>
+      <li>GGX の個性は長い裾＝ハイライトの外のふわっとした光の尾</li>
+      <li>原論文は Beckmann だったが、見た目のリアルさで GGX が標準になった</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch07.html">← 第7章へ</a>
+    <a href="ch09.html">第9章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  /* --- D電卓 --- */
+  function calc(){
+    var ang = parseFloat(document.getElementById("w8calc_ang").value);
+    var rough = parseFloat(document.getElementById("w8calc_rough").value);
+    document.getElementById("w8calc_ang_val").textContent = ang.toFixed(0);
+    document.getElementById("w8calc_rough_val").textContent = rough.toFixed(2);
+    var NoH = Math.cos(ang*Math.PI/180);
+    var a = rough*rough, a2 = a*a;
+    var d = NoH*NoH*(a2-1)+1;
+    var D = a2/(Math.PI*d*d);
+    document.getElementById("w8c_noh").textContent = NoH.toFixed(4);
+    document.getElementById("w8c_a").textContent = a.toFixed(4);
+    document.getElementById("w8c_a2").textContent = a2.toFixed(6);
+    document.getElementById("w8c_d").textContent = d.toFixed(4);
+    document.getElementById("w8c_D").textContent = D.toFixed(4);
+  }
+  document.getElementById("w8calc_ang").addEventListener("input", calc);
+  document.getElementById("w8calc_rough").addEventListener("input", calc);
+  calc();
+
+  /* --- グラフ --- */
+  Widgets.dGraph("w8a");
+  Widgets.dGraph("w8cg", { both:true, roughId:"w8cg_rough" });
+
+  /* --- 球体（Dのみ表示） --- */
+  var v8b = Viewport.mount(document.getElementById("w8b"), {
+    controls:false, modes:false, readout:false, lockMode:3, env:false,
+    initial:{ rough:0.35 }
+  });
+  document.getElementById("w8b_rough").addEventListener("input", function(){
+    document.getElementById("w8b_rough_val").textContent = (+this.value).toFixed(2);
+    if(v8b){ v8b.state.rough = parseFloat(this.value); v8b.draw(); }
+  });
+
+  /* --- 球体（GGX/Beckmann切替） --- */
+  var v8d = Viewport.mount(document.getElementById("w8d"), {
+    controls:false, modes:false, readout:false, lockMode:3, env:false,
+    initial:{ rough:0.35 }
+  });
+  document.getElementById("w8d_rough").addEventListener("input", function(){
+    document.getElementById("w8d_rough_val").textContent = (+this.value).toFixed(2);
+    if(v8d){ v8d.state.rough = parseFloat(this.value); v8d.draw(); }
+  });
+  document.querySelectorAll("[data-w8d]").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll("[data-w8d]").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      if(v8d){ v8d.state.beckmann = (b.getAttribute("data-w8d")==="beck") ? 1 : 0; v8d.draw(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

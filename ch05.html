@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第5章 BRDFとは何か - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第5章</span>
+    <h1>BRDF とは何か</h1>
+    <p class="lead">前章の反射方程式に出てきた謎の関数 f(l, v)。その正体「BRDF」を、材質の個性そのものとして理解します。</p>
+  </section>
+
+  <section>
+    <h2>BRDF ＝ 材質の「反射のルールブック」</h2>
+    <p>
+      BRDF（Bidirectional Reflectance Distribution Function／双方向反射率分布関数）は、
+      名前は仰々しいですが、やっていることはシンプルです：
+    </p>
+    <div class="formula">
+      <strong>f(l, v) ＝「方向 l から来た光を、方向 v へどれだけ返すか」</strong>
+      <div class="jp">入射方向と出射方向のペアを渡すと、反射率を返してくれる関数</div>
+    </div>
+    <p>
+      つまり<strong>「入り口」と「出口」の組み合わせごとに数値を返す表</strong>のようなものです。
+      この表の中身が材質によって全く違う——それが「材質の見た目の違い」の正体です。
+    </p>
+  </section>
+
+  <section>
+    <h2>材質の違い ＝ BRDF の違い</h2>
+    <p>身近な3つの材質で考えてみましょう。</p>
+    <ul>
+      <li><strong>チョーク（完全拡散）</strong> — どの方向から光が来ても、あらゆる方向へ均等に返す。
+        どこから見ても明るさがほぼ同じ。BRDF は「平ら」。</li>
+      <li><strong>鏡（鏡面）</strong> — 来た光を正反射方向へ<em>だけ</em>返す。
+        正しい角度から見たときだけ光源が見える。BRDF は「一本の鋭い針」。</li>
+      <li><strong>プラスチック（光沢）</strong> — その中間。正反射方向を中心に、
+        ある程度の広がりを持って返す。BRDF は「ふくらんだローブ（丸い突起）」。</li>
+    </ul>
+    <div class="callout">
+      <strong>ローブ（lobe）</strong>という言葉を覚えてください。
+      「ある方向を中心にした反射の分布のふくらみ」のことで、BRDF の議論で頻繁に登場します。
+    </div>
+  </section>
+
+  <section>
+    <h2>W5-a: BRDF ローブ可視化ツール</h2>
+    <p>
+      表面のある1点を真横から見た断面図です。<span class="var">黄色の矢印</span>が入射光、
+      <span style="color:var(--spec);font-weight:600">青いふくらみ</span>がBRDF（各方向へどれだけ反射するか）。
+      プリセットを切り替えたり、入射角やラフネスを動かして、ローブの形の変化を観察してください。
+    </p>
+    <div class="widget-box">
+      <div class="seg" style="margin-bottom:14px">
+        <button data-w5a="diffuse">完全拡散（チョーク）</button>
+        <button data-w5a="glossy" class="on">光沢（プラスチック）</button>
+        <button data-w5a="mirror">鏡面（金属鏡）</button>
+      </div>
+      <canvas id="w5a" class="canvas-widget" style="height:340px;"></canvas>
+      <div class="ctrl"><div class="row"><label>入射角</label><span class="val" id="w5a_theta_val">40</span></div>
+        <input type="range" id="w5a_theta" min="0" max="80" step="1" value="40"></div>
+      <div class="ctrl"><div class="row"><label>ラフネス roughness</label><span class="val" id="w5a_rough_val">0.30</span></div>
+        <input type="range" id="w5a_rough" min="0.03" max="1" step="0.01" value="0.30"></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:13px;">
+      ※ ローブは見やすいように最大値で正規化しています（鏡面の針は実際にはもっと桁違いに鋭い）。
+      左上の「ローブ最大値」で実際の数値の変化を確認できます。
+    </p>
+  </section>
+
+  <section>
+    <h2>diffuse + specular に分ける</h2>
+    <p>
+      現実の材質の多くは「チョーク成分」と「鏡成分」の混合です。
+      そこで BRDF を2つの部品に分けて設計するのが定石です：
+    </p>
+    <div class="formula">
+      <strong>f = kd · f<sub>diffuse</sub> + f<sub>specular</sub></strong>
+      <div class="jp">意味：拡散（表面の下で散乱して出てくる光）＋ 鏡面（表面で跳ね返る光）</div>
+    </div>
+    <ul>
+      <li><span class="var">f<sub>diffuse</sub></span> — 光が表面の内部にわずかに潜り、散乱して出てくる成分。
+        物体の「色」に見える。→ <strong>第6章</strong></li>
+      <li><span class="var">f<sub>specular</sub></span> — 表面でそのまま跳ね返る成分。
+        ハイライトや映り込みに見える。→ <strong>第7〜10章</strong></li>
+      <li><span class="var">kd</span> — 拡散に回る光の割合（エネルギーの配分係数）。→ <strong>第11章</strong></li>
+    </ul>
+    <div class="callout">
+      <strong>Cook-Torrance は f<sub>specular</sub> の設計図</strong>です。
+      「マイクロファセット理論」という物理モデルに基づいて、鏡面反射のローブの形を計算します。
+    </div>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>BRDF は「入射方向と出射方向のペアごとに反射率を返す関数」＝材質の個性</li>
+      <li>チョークは平らなローブ、鏡は鋭い針、プラスチックは中間のふくらみ</li>
+      <li>実用上は f = kd·f_diffuse + f_specular の2成分に分けて設計する</li>
+      <li>次章から部品をひとつずつ作る。まずは簡単な diffuse（Lambert）から</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch04.html">← 第4章へ</a>
+    <a href="ch06.html">第6章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/math.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.brdfLobe("w5a");
+})();
+</script>
+</body>
+</html>

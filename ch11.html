@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第11章 全体の合成とエネルギー保存 - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .calc-grid{ display:grid; grid-template-columns:320px 1fr; gap:16px; align-items:start; margin:1.5em 0; }
+  @media (max-width:900px){ .calc-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第11章</span>
+    <h1>全体の合成とエネルギー保存</h1>
+    <p class="lead">D・F・G が出揃いました。すべての部品を1本の式につなぎ、スライダーから最終RGBまでを電卓レベルで完全トレースします。</p>
+  </section>
+
+  <section>
+    <h2>完成形の式</h2>
+    <div class="formula">
+      <strong>f = kd · (albedo / π) + D·F·G / (4·(n·l)·(n·v))</strong><br>
+      <strong>kd = (1 − F) · (1 − metallic)</strong><br>
+      <strong>Lo = f · Lc · (n·l)</strong>
+      <div class="jp">意味：拡散＋鏡面を kd で配分し、光の色と斜め補正を掛けて画面の明るさに</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>kd の意味 — スペキュラに使った光は、拡散に回らない</h2>
+    <p>
+      表面に届いた光の使い道は2つに1つです。
+      <strong>表面で跳ね返る（スペキュラ）か、内部に潜って散乱する（ディフューズ）か</strong>。
+      同じ光を両方に使うことはできません。
+    </p>
+    <p>
+      スペキュラに使われた割合はフレネルの <span class="var">F</span> そのものです。
+      だから拡散に回れるのは残りの <span class="k">(1 − F)</span>。
+      これがエネルギー保存の会計係 <span class="var">kd</span> の正体です。
+    </p>
+    <div class="callout">
+      <strong>(1 − metallic) はなぜ掛かる？</strong>
+      金属の内部には自由電子が詰まっていて、潜り込んだ光は即座に吸収されます。
+      つまり金属では拡散が発生しません。metallic=1 で拡散をゼロにするための係数です。
+    </div>
+  </section>
+
+  <section>
+    <h2>metallic ワークフローまとめ</h2>
+    <p>第9章と合わせると、metallic スライダー1本の裏で起きていることはこの2つです：</p>
+    <ul>
+      <li><span class="k">F0 = mix(0.04, albedo, metallic)</span> — 反射率と反射の色が切り替わる</li>
+      <li><span class="k">kd = (1−F)·(1−metallic)</span> — metallic=1 で拡散が消滅する</li>
+    </ul>
+    <p>
+      metallic=1 のとき、albedo は「物体の色」ではなく「<strong>反射の色（F0）</strong>」として使われる——
+      これが金属ワークフローの本質です。
+    </p>
+  </section>
+
+  <section>
+    <h2>W11-a: ステップ実行計算機 — 数値のフルトレース</h2>
+    <p>
+      左のスライダーで条件を決めると、右の表で<strong>ベクトル作りから最終RGBまでの全ステップ</strong>が
+      電卓レベルで追えます。総合ビューポートの「ピクセル検査」と同じ計算です。
+      シェーダ（GPU）も、1ピクセルごとにまさにこの手順を実行しています。
+    </p>
+    <div class="calc-grid">
+      <div class="panel">
+        <h4>ジオメトリ（面は真上向き n=(0,1,0)）</h4>
+        <div class="ctrl"><div class="row"><label>ライトの角度（法線から）</label><span class="val" id="w11_thl_val">30</span></div>
+          <input type="range" id="w11_thl" min="0" max="85" step="1" value="30"></div>
+        <div class="ctrl"><div class="row"><label>視線の角度（法線から・反対側）</label><span class="val" id="w11_thv_val">30</span></div>
+          <input type="range" id="w11_thv" min="0" max="85" step="1" value="30"></div>
+        <h4>マテリアル</h4>
+        <div class="ctrl"><div class="row"><label>ベースカラー</label><span class="val" id="w11_base_val">#c86432</span></div>
+          <input type="color" id="w11_base" value="#c86432"></div>
+        <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w11_rough_val">0.40</span></div>
+          <input type="range" id="w11_rough" min="0.05" max="1" step="0.01" value="0.4"></div>
+        <div class="ctrl"><div class="row"><label>metallic</label><span class="val" id="w11_metal_val">0.00</span></div>
+          <input type="range" id="w11_metal" min="0" max="1" step="0.01" value="0"></div>
+        <div class="ctrl"><div class="row"><label>F0（非金属）</label><span class="val" id="w11_f0_val">0.04</span></div>
+          <input type="range" id="w11_f0" min="0" max="0.08" step="0.001" value="0.04"></div>
+        <h4>ライト</h4>
+        <div class="ctrl"><div class="row"><label>ライト色</label><span class="val" id="w11_lcol_val">#fff4e0</span></div>
+          <input type="color" id="w11_lcol" value="#fff4e0"></div>
+        <div class="ctrl"><div class="row"><label>強度</label><span class="val" id="w11_lint_val">3.00</span></div>
+          <input type="range" id="w11_lint" min="0" max="10" step="0.1" value="3"></div>
+      </div>
+      <div class="readout" style="margin-top:0">
+        <div class="rhead"><span>全ステップの計算値</span><span class="dot live"></span></div>
+        <table class="rtable"><tbody id="w11_table"></tbody></table>
+      </div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:13px;">
+      ※ 色の計算はリニア空間で行い、最後にトーンマップ（Reinhard）と sRGB 変換をして画面の色にしています。
+      カラーピッカーの値も内部でリニアに変換されます。
+    </p>
+  </section>
+
+  <section>
+    <h2>試してほしい実験</h2>
+    <ul>
+      <li><strong>ハイライトの条件</strong>：ライトと視線の角度を同じにすると h が n と一致して n·h=1 → D が最大に</li>
+      <li><strong>metallic を 1 へ</strong>：kd → 0 になり diffuse の行が消滅、F0 がベースカラーになる様子を追う</li>
+      <li><strong>すれすれ実験</strong>：視線の角度を 85° に → (1−v·h)⁵ が跳ね上がり F が 1 に近づく（第9章）、
+        同時に G1(n·v) が下がる（第10章）——2つの項の綱引きを数値で見る</li>
+      <li><strong>roughness の両端</strong>：0.05 と 1.0 で D のピーク値の桁の違いを見る（第8章）</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>f = kd·(albedo/π) + D·F·G/(4(n·l)(n·v))。役者は全員登場済み</li>
+      <li>kd = (1−F)(1−metallic)。スペキュラに使った光は拡散に回らない（エネルギー保存）</li>
+      <li>metallic は「F0の切り替え」と「拡散の消滅」の2つを同時に操作するスイッチ</li>
+      <li>スライダーから最終RGBまで、全ステップが四則演算で追えるようになった——完全理解まであと1章</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch10.html">← 第10章へ</a>
+    <a href="index.html">目次へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/math.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.stepCalc("w11_table");
+})();
+</script>
+</body>
+</html>

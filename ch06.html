@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第6章 ディフューズ成分 Lambert - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .numline{ font-family:var(--mono); font-size:13px; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第6章</span>
+    <h1>ディフューズ成分: Lambert</h1>
+    <p class="lead">BRDF の最初の部品。式はたった1行——でも「なぜ π で割るのか」には深い意味があります。</p>
+  </section>
+
+  <section>
+    <h2>式はこれだけ</h2>
+    <div class="formula">
+      <strong>f<sub>diffuse</sub> = albedo / π</strong>
+      <div class="jp">意味：ベースカラーを π（約3.14）で割っただけの定数。方向によらず一定</div>
+    </div>
+    <p>
+      入射方向にも出射方向にも依存しない、ただの定数です。
+      これが「どこから見ても同じ明るさ」というチョーク的な性質の数式表現です。
+    </p>
+  </section>
+
+  <section>
+    <h2>表面の下で起きていること</h2>
+    <p>
+      拡散反射の光は、表面で<em>そのまま</em>跳ね返っているのではありません。
+      光は表面のごく浅いところに潜り込み、内部の粒子に何度もぶつかって散乱し、
+      <strong>入ってきた方向を「忘れて」あらゆる方向へ均等に出ていきます</strong>。
+    </p>
+    <p>
+      このとき材質は特定の波長（色）を吸収します。
+      赤いリンゴは「赤以外を吸収して、赤を多く返す」材質です。
+    </p>
+    <div class="callout">
+      <strong>albedo（アルベド／ベースカラー）＝波長ごとの反射率</strong>。
+      RGB の3つの数（各0〜1）で表します。albedo = (0.8, 0.2, 0.2) なら
+      「赤を80%返し、緑と青は20%しか返さない」＝赤い材質です。
+      Substance などの Base Color はまさにこれです。
+    </div>
+  </section>
+
+  <section>
+    <h2>W6-a: Lambert だけの球体</h2>
+    <p>
+      下のビューポートは<strong>ディフューズ成分だけ</strong>を表示しています（スペキュラなし）。
+      ベースカラー・ライト色・ライト方向を動かしてみてください。
+      ハイライトが無く、明るさが n·l（第2章）だけで決まる、マットな見た目になります。
+    </p>
+    <div class="widget-box">
+      <div id="w6a"></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:13px;">
+      ※ メタリックを上げると拡散が消えて真っ黒になります。その理由は第11章（kd とエネルギー配分）で分かります。
+    </p>
+  </section>
+
+  <section>
+    <h2>なぜ π で割るのか — エネルギー保存</h2>
+    <p>
+      物理のルール：<strong>反射される光の合計は、入ってきた光を超えてはいけない</strong>。
+      面が受け取った光は半球のあらゆる方向へ配られますが、
+      「全方向への配布量の合計」を計算すると、BRDF の値の <strong>π 倍</strong>になります
+      （半球全体について (n·l) の重み付きで足し算すると π が出てくる——導出は補足章で）。
+    </p>
+    <p class="numline">
+      もし f = albedo のままだと：合計 = albedo × π ≒ albedo × 3.14 → <strong style="color:var(--bad)">入射の3倍以上の光が出てしまう！</strong><br>
+      f = albedo ÷ π にすれば：合計 = albedo ≦ 1 → <strong style="color:var(--good)">ちゃんと保存される</strong>
+    </p>
+    <p>
+      つまり π は「<strong>配りすぎ防止の正規化</strong>」です。
+      半球全体に薄く広く配るぶん、1方向あたりの取り分を π で割って小さくしておく、というイメージです。
+    </p>
+  </section>
+
+  <section>
+    <h2>W6-b: π で割る／割らない比較</h2>
+    <p>
+      albedo を動かしながら、÷π の有無でエネルギーの合計がどうなるかを確認してください。
+      「÷π なし」では合計が 1.0（入射光）を超えて物理的に破綻します。
+    </p>
+    <div class="widget-box">
+      <div class="seg" style="margin-bottom:14px">
+        <button data-w6b="on" class="on">÷ π あり（正しい）</button>
+        <button data-w6b="off">÷ π なし（破綻）</button>
+      </div>
+      <canvas id="w6b" class="canvas-widget" style="height:220px;"></canvas>
+      <div class="ctrl"><div class="row"><label>albedo（反射率）</label><span class="val" id="w6b_albedo_val">0.80</span></div>
+        <input type="range" id="w6b_albedo" min="0" max="1" step="0.01" value="0.8"></div>
+      <table class="rtable" style="margin-top:10px">
+        <tr><td class="name">BRDF の値 f</td><td class="num" id="w6b_f">—</td></tr>
+        <tr><td class="name">半球全体に配った合計（= f × π）</td><td class="num" id="w6b_total">—</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>Lambert 拡散は f = albedo / π。方向によらない定数</li>
+      <li>albedo（ベースカラー）は RGB の反射率。材質の「色」の正体</li>
+      <li>π で割るのはエネルギー保存のため（半球に配ると合計が π 倍になる）</li>
+      <li>次章からいよいよ本丸、スペキュラ（Cook-Torrance 本体）へ</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch05.html">← 第5章へ</a>
+    <a href="ch07.html">第7章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Viewport.mount(document.getElementById("w6a"), {
+    controls: true, modes: false, readout: false,
+    lockMode: 1,           // Diffuse のみ
+    env: false,
+    initial: { baseHex: "#c04a3a", lightHex: "#fff0d8", lightInt: 3.0, rough: 0.5, metal: 0.0 }
+  });
+  Widgets.piToggle("w6b");
+})();
+</script>
+</body>
+</html>

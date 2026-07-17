@@ -40,6 +40,7 @@
       el: 35,   // ライト仰角(deg)
       isPoint: 0,
       mode: (opts.lockMode!=null? opts.lockMode : 0),
+      beckmann: 0,   // 1=D項をBeckmannで計算（第8章コラム W8-d）
       env: (opts.env!==undefined ? opts.env : (opts.lockMode!=null ? "none" : "751")),
       envInt: (opts.envInt!==undefined ? opts.envInt : 1.4),
       bgBlur: (opts.bgBlur!==undefined ? opts.bgBlur : 0.25)
@@ -77,7 +78,7 @@
     var loc = {};
     ["aPos","aNrm"].forEach(function(n){ loc[n]=gl.getAttribLocation(prog,n); });
     ["uMVP","uModel","uCamPos","uLightDir","uLightPos","uLightIsPoint","uLightColor","uLightInt",
-     "uBaseColor","uRough","uMetal","uF0dielectric","uMode"].forEach(function(n){ loc[n]=gl.getUniformLocation(prog,n); });
+     "uBaseColor","uRough","uMetal","uF0dielectric","uMode","uBeckmann"].forEach(function(n){ loc[n]=gl.getUniformLocation(prog,n); });
 
     gl.enable(gl.DEPTH_TEST);
 
@@ -134,6 +135,7 @@
       gl.uniform1f(loc.uMetal, state.metal);
       gl.uniform1f(loc.uF0dielectric, state.f0d);
       gl.uniform1i(loc.uMode, state.mode);
+      gl.uniform1i(loc.uBeckmann, state.beckmann?1:0);
 
       if (useEnv) IBL.bind(gl, prog, envOn ? state.env : "none", state.envInt);
 

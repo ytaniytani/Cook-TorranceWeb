@@ -48,6 +48,7 @@
     "uniform float uMetal;",
     "uniform float uF0dielectric;",// 非金属F0（既定0.04）
     "uniform int  uMode;",
+    "uniform int  uBeckmann;",     // 1=D項をBeckmannで計算（第8章コラム）
     "",
     "uniform int   uUseEnv;",      // 1=IBL有効
     "uniform float uEnvInt;",      // 環境光の強度
@@ -65,6 +66,13 @@
     "  float a2 = a*a;",
     "  float d = NoH*NoH*(a2-1.0)+1.0;",
     "  return a2 / (PI*d*d);",
+    "}",
+    "float D_Beckmann(float NoH, float m){",   // 第8章コラム比較用（m=α）
+    "  float c2 = NoH*NoH;",
+    "  if(c2 <= 1e-6 || m <= 1e-6) return 0.0;",
+    "  float t2 = (1.0-c2)/c2;",               // tan^2θ
+    "  float m2 = m*m;",
+    "  return exp(-t2/m2) / (PI*m2*c2*c2);",
     "}",
     "float G1(float NoX, float k){ return NoX/(NoX*(1.0-k)+k); }",
     "float G_Smith(float NoL, float NoV, float rough){",
@@ -121,7 +129,7 @@
     "",
     "  float a = uRough*uRough;",  // α = roughness^2
     "  vec3  F0 = mix(vec3(uF0dielectric), uBaseColor, uMetal);",
-    "  float D = D_GGX(NoH, a);",
+    "  float D = (uBeckmann==1) ? D_Beckmann(NoH, a) : D_GGX(NoH, a);",
     "  float G = G_Smith(NoL, NoV, uRough);",
     "  vec3  F = F_Schlick(VoH, F0);",
     "",

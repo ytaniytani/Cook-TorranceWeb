@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第10章 G項 幾何減衰 Smith - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第10章</span>
+    <h1>スペキュラ成分④: G項（幾何減衰 / Smith + Schlick-GGX）</h1>
+    <p class="lead">凸凹の山が谷を隠す——マイクロファセットどうしの「お互い様の遮り合い」を数える、最後の部品です。</p>
+  </section>
+
+  <section>
+    <h2>2種類の「遮り」</h2>
+    <p>
+      D 項は「h を向いた鏡の在庫」を数えました。でもその鏡が実際に働けるとは限りません。
+      凸凹な表面では、まわりの山が邪魔をするからです。邪魔のされかたは2通りあります：
+    </p>
+    <ul>
+      <li><strong>シャドウイング（shadowing）</strong> — 光が来る途中で山に遮られ、
+        鏡まで<strong>届かない</strong>（谷が影に入る）</li>
+      <li><strong>マスキング（masking）</strong> — 鏡は光を反射したのに、
+        カメラへ向かう途中で山に遮られ、<strong>見えない</strong></li>
+    </ul>
+    <div class="callout">
+      <strong>G は「無事に働けた鏡の割合」（0〜1）</strong>。
+      光の側の生存率とカメラの側の生存率、両方をクリアして初めて反射がカメラに届きます。
+    </div>
+  </section>
+
+  <section>
+    <h2>W10-a: 遮蔽シミュレータ（断面図）</h2>
+    <p>
+      凸凹の断面に浅い角度から光（または視線）を当てたとき、
+      <strong style="color:var(--bad)">赤い部分＝遮られて寄与できない部分</strong>です。
+      角度を浅く（小さく）したり roughness を上げたりすると、赤が一気に増えます。
+    </p>
+    <div class="widget-box">
+      <div class="seg" style="margin-bottom:14px">
+        <button data-w10a="shadow" class="on">シャドウイング（光が届くか）</button>
+        <button data-w10a="mask">マスキング（カメラから見えるか）</button>
+      </div>
+      <canvas id="w10a" class="canvas-widget" style="height:320px;"></canvas>
+      <div class="ctrl"><div class="row"><label>仰角（水平からの角度）</label><span class="val" id="w10a_angle_val">25</span></div>
+        <input type="range" id="w10a_angle" min="5" max="85" step="1" value="25"></div>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w10a_rough_val">0.50</span></div>
+        <input type="range" id="w10a_rough" min="0" max="1" step="0.01" value="0.5"></div>
+      <table class="rtable" style="margin-top:10px">
+        <tr><td class="name">見えている（働けている）割合<div class="desc">≒ G の直感</div></td>
+            <td class="num" id="w10a_ratio">—</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>式（Smith + Schlick-GGX）</h2>
+    <p>
+      「光側の生存率 × カメラ側の生存率」という形（Smith の分離）で書きます：
+    </p>
+    <div class="formula">
+      <strong>G = G1(l) · G1(v)</strong><br>
+      <strong>G1(x) = (n·x) / ( (n·x)·(1−k) + k )</strong><br>
+      <strong style="color:var(--spec)">k = (roughness+1)² / 8</strong>
+      <div class="jp">意味：G1 が1方向ぶんの生存率。それをライト方向とカメラ方向で1回ずつ掛ける</div>
+    </div>
+    <ul>
+      <li><span class="var">n·x</span> が1に近い（真上からの方向）→ G1 ≈ 1。ほぼ遮られない</li>
+      <li><span class="var">n·x</span> が0に近い（すれすれの方向）→ G1 が小さくなる。多くが遮られる</li>
+      <li><span class="var">k</span> は roughness から決まる係数。粗いほど k が大きく、減衰がきつくなる</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>W10-b: G 関数のグラフ</h2>
+    <p>
+      横軸は方向の角度（90°に近い＝すれすれ）、縦軸は生存率 G1。
+      roughness を上げると、浅い角度での落ち込みが手前から始まることを確認してください。
+    </p>
+    <div class="widget-box">
+      <canvas id="w10b" class="canvas-widget" style="height:300px;"></canvas>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w10b_rough_val">0.50</span></div>
+        <input type="range" id="w10b_rough" min="0" max="1" step="0.01" value="0.5"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>W10-c: 球体で G 項だけを見る</h2>
+    <p>
+      G 項だけを白黒表示した球体です。roughness を上げると、
+      <strong>縁（視線がすれすれになる場所）から暗くなっていく</strong>のが分かります。
+      第9章の F（縁が明るくなる）とちょうど逆の働きです。
+    </p>
+    <div class="widget-box">
+      <div id="w10c"></div>
+      <div class="ctrl"><div class="row"><label>roughness</label><span class="val" id="w10c_rough_val">0.50</span></div>
+        <input type="range" id="w10c_rough" min="0" max="1" step="0.01" value="0.5"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>G は凸凹による遮り（シャドウイング＝光側、マスキング＝カメラ側）の生存率</li>
+      <li>Smith の分離で G = G1(l)·G1(v)。1方向ぶん × 2回</li>
+      <li>浅い角度 ＋ 高 roughness ほど暗くなる。フレネル（縁で明るい）への物理的なブレーキ役</li>
+      <li>これで D・F・G が出揃った。次章でついに全部を合成する</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch09.html">← 第9章へ</a>
+    <a href="ch11.html">第11章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.shadowMask2D("w10a");
+  Widgets.gGraph("w10b");
+
+  var v10c = Viewport.mount(document.getElementById("w10c"), {
+    controls:false, modes:false, readout:false, lockMode:5, env:false,
+    initial:{ rough:0.5 }
+  });
+  document.getElementById("w10c_rough").addEventListener("input", function(){
+    document.getElementById("w10c_rough_val").textContent = (+this.value).toFixed(2);
+    if(v10c){ v10c.state.rough = parseFloat(this.value); v10c.draw(); }
+  });
+})();
+</script>
+</body>
+</html>

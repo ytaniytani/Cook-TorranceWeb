@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第9章 F項 フレネル Schlick近似 - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .widget-box{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .canvas-widget{ display:block; width:100%; border-radius:8px; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono);
+            line-height:1.8; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; }
+  .callout{ background:var(--panel); border:1px solid var(--spec); border-radius:8px; padding:16px; margin:1em 0; }
+  .callout strong{ color:var(--spec); }
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .f0table{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13px; margin:1em 0; }
+  .f0table th,.f0table td{ padding:.55em .8em; text-align:left; border-bottom:1px solid var(--line); }
+  .f0table th{ background:var(--panel-2); font-weight:600; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第9章</span>
+    <h1>スペキュラ成分③: F項（フレネル / Schlick近似）</h1>
+    <p class="lead">「浅い角度で見ると、何でも鏡になる」——身の回りで毎日起きている物理現象が、metallic パラメータの正体につながります。</p>
+  </section>
+
+  <section>
+    <h2>まず現象から：水面と机</h2>
+    <p>
+      湖を思い出してください。<strong>足元の水面</strong>は底が透けて見えますが、
+      <strong>遠くの水面</strong>は空を映す鏡になっています。同じ水なのに、です。
+    </p>
+    <p>
+      机でも同じ実験ができます。目の高さを机の面すれすれまで下げて遠くを見ると、
+      普段は反射なんてしないつや消しの机が、窓や照明をうっすら映し出します。
+    </p>
+    <div class="callout">
+      <strong>フレネル効果</strong>：面を正面から見ると反射は弱く、
+      <strong>浅い角度（すれすれ）で見るほど反射が強くなり、90°の極限では何でも100%の鏡になる</strong>。
+      これはあらゆる物質に共通の物理法則です。
+    </div>
+  </section>
+
+  <section>
+    <h2>式（Schlick 近似）</h2>
+    <div class="formula">
+      <strong>F<sub>Schlick</sub> = F0 + (1 − F0) · (1 − v·h)⁵</strong>
+      <div class="jp">意味：正面では F0、すれすれ（v·h→0）では 1.0 に向かって急カーブで立ち上がる</div>
+    </div>
+    <ul>
+      <li><span class="var">F0</span> — <strong>正面（垂直入射）から見たときの反射率</strong>。材質固有の値</li>
+      <li><span class="var">v·h</span> — 視線とハーフベクトルの揃い具合。正面で1、すれすれで0</li>
+      <li><span class="var">5乗</span> — 「端で急に立ち上がるカーブ」を作るための近似。
+        物理の厳密式（フレネル方程式）をゲーム向けに軽くしたもので、精度は十分</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>W9-a: フレネルカーブ</h2>
+    <p>
+      横軸は視線の角度（0°=正面、90°=すれすれ）、縦軸は反射率。
+      F0 を変えても、<strong>90° 側では必ず 1.0 に到達する</strong>ことを確認してください。
+    </p>
+    <div class="widget-box">
+      <div class="seg" style="margin-bottom:14px">
+        <button data-w9a="0.02">水 0.02</button>
+        <button data-w9a="0.04" class="on">プラスチック 0.04</button>
+        <button data-w9a="0.56">鉄 0.56</button>
+        <button data-w9a="0.95">銀 0.95</button>
+      </div>
+      <canvas id="w9a" class="canvas-widget" style="height:300px;"></canvas>
+      <div class="ctrl"><div class="row"><label>F0（正面の反射率）</label><span class="val" id="w9a_f0_val">0.04</span></div>
+        <input type="range" id="w9a_f0" min="0" max="1" step="0.01" value="0.04"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>F0 — 材質がここに現れる</h2>
+    <table class="f0table">
+      <tr><th>材質</th><th>F0</th><th>特徴</th></tr>
+      <tr><td>水</td><td>0.02</td><td rowspan="3">非金属はどれも <strong>0.02〜0.05</strong> の狭い範囲。
+        だから一律 <strong>0.04</strong> と決め打ちしてよい</td></tr>
+      <tr><td>プラスチック・樹脂</td><td>0.04</td></tr>
+      <tr><td>ガラス</td><td>0.04</td></tr>
+      <tr><td>鉄</td><td>(0.56, 0.57, 0.58)</td><td rowspan="3">金属は桁違いに高く、しかも<strong>RGBで異なる＝色つきの反射</strong>。
+        F0 がそのまま金属の「色」になる</td></tr>
+      <tr><td>金</td><td>(1.00, 0.71, 0.29)</td></tr>
+      <tr><td>銀</td><td>(0.95, 0.93, 0.88)</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>metallic パラメータの正体はここ</h2>
+    <p>
+      Substance や UE の <strong>metallic スライダー</strong>は、実はこの F0 の切り替えスイッチです：
+    </p>
+    <div class="formula">
+      <strong>F0 = mix(0.04, baseColor, metallic)</strong>
+      <div class="jp">metallic=0 → F0は0.04（非金属）／ metallic=1 → F0はベースカラーそのもの（金属）</div>
+    </div>
+    <ul>
+      <li><strong>metallic = 0（非金属）</strong>：F0=0.04 の無色の反射＋ベースカラーは拡散（物体の色）に使われる</li>
+      <li><strong>metallic = 1（金属）</strong>：ベースカラーが F0 になり<strong>反射自体に色がつく</strong>。
+        拡散は消滅する（金属内部に光が潜れないため。第11章で詳しく）</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>W9-b: 球体で F 項だけを見る</h2>
+    <p>
+      F 項だけを表示した球体です。<strong>縁（りん郭）に近いほど明るくなる「リム」</strong>が見えます。
+      球の縁は視線に対してすれすれの角度＝フレネルが強く効く場所だからです。
+    </p>
+    <div class="widget-box">
+      <div id="w9b"></div>
+      <div class="ctrl"><div class="row"><label>F0（非金属）</label><span class="val" id="w9b_f0_val">0.04</span></div>
+        <input type="range" id="w9b_f0" min="0" max="0.08" step="0.001" value="0.04"></div>
+      <div class="ctrl"><div class="row"><label>metallic</label><span class="val" id="w9b_metal_val">0.00</span></div>
+        <input type="range" id="w9b_metal" min="0" max="1" step="0.01" value="0"></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:13px;">
+      ※ metallic を 1 にすると全体が明るくなります。F0 がベースカラー（明るいグレー）に切り替わるためです。
+    </p>
+  </section>
+
+  <section>
+    <h2>まとめ</h2>
+    <ul>
+      <li>フレネル効果：浅い角度ほど反射が強い。90°では何でも100%の鏡</li>
+      <li>Schlick 近似の5乗は「端で急に立ち上がるカーブ」を作る道具</li>
+      <li>F0 は正面反射率。非金属は一律 0.04、金属はベースカラーそのもの</li>
+      <li>metallic スライダーの正体は F0 と拡散の切り替え</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch08.html">← 第8章へ</a>
+    <a href="ch10.html">第10章へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/widgets.js"></script>
+<script>
+(function(){
+  Widgets.fresnelGraph("w9a");
+
+  var v9b = Viewport.mount(document.getElementById("w9b"), {
+    controls:false, modes:false, readout:false, lockMode:4, env:false,
+    initial:{ rough:0.3, metal:0.0, f0d:0.04 }
+  });
+  document.getElementById("w9b_f0").addEventListener("input", function(){
+    document.getElementById("w9b_f0_val").textContent = (+this.value).toFixed(3);
+    if(v9b){ v9b.state.f0d = parseFloat(this.value); v9b.draw(); }
+  });
+  document.getElementById("w9b_metal").addEventListener("input", function(){
+    document.getElementById("w9b_metal_val").textContent = (+this.value).toFixed(2);
+    if(v9b){ v9b.state.metal = parseFloat(this.value); v9b.draw(); }
+  });
+})();
+</script>
+</body>
+</html>
