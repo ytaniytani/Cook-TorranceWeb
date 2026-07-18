@@ -132,6 +132,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch05.html">← 第5章へ</a>
     <a href="ch07.html">第7章へ →</a>
@@ -154,6 +159,44 @@
   });
   Widgets.piToggle("w6b");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第6章 理解度チェック",
+  "questions": [
+    {
+      "q": "Lambert の式で albedo を π で割るのはなぜ？",
+      "opts": [
+        "計算を速くするため",
+        "エネルギー保存（反射光を配りすぎないための正規化）",
+        "色を暗くしたいから"
+      ],
+      "answer": 1,
+      "explain": "半球全体に均等に配ると合計が π 倍になるため、π で割って「入った以上に返さない」ようにします。"
+    },
+    {
+      "q": "albedo（ベースカラー）の正体は？",
+      "opts": [
+        "波長ごとの反射率＝RGBの3つの数",
+        "面の粗さ",
+        "ライトの強さ"
+      ],
+      "answer": 0,
+      "explain": "albedo は各波長（RGB）をどれだけ反射するかの割合。0〜1の3つの数です。"
+    },
+    {
+      "q": "Lambert 拡散は見る方向によって明るさが変わりますか？",
+      "opts": [
+        "変わる（鏡のように）",
+        "変わらない（どの方向へも均等）",
+        "カメラ距離で変わる"
+      ],
+      "answer": 1,
+      "explain": "Lambert は完全拡散。表面下で散乱した光をあらゆる方向へ均等に返すので、視線方向に依存しません。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

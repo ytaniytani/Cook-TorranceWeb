@@ -254,6 +254,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch03.html">← 第3章へ</a>
     <a href="ch05.html">第5章へ →</a>
@@ -272,6 +277,44 @@
 (function(){
   Widgets.reflectionEquation("w4a");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第4章 理解度チェック",
+  "questions": [
+    {
+      "q": "Lo（出射光）は最終的に画面上の何になりますか？",
+      "opts": [
+        "ピクセルの明るさ",
+        "三角形の数",
+        "カメラの速度"
+      ],
+      "answer": 0,
+      "explain": "Lo はカメラに向かう光の量で、そのままピクセルの明るさ（色）になります。"
+    },
+    {
+      "q": "式の中の (n·l) は何を担当していますか？",
+      "opts": [
+        "色を混ぜる",
+        "斜めから当たる光は薄まる、という効果",
+        "反射の鋭さ"
+      ],
+      "answer": 1,
+      "explain": "同じ光でも斜めに当たるほど単位面積あたりが薄まります。それを (n·l) が表します。"
+    },
+    {
+      "q": "本サイトが採用する簡略化した反射方程式は？",
+      "opts": [
+        "Lo = f · Lc · (n·l)",
+        "Lo = f + Lc + (n·l)",
+        "Lo = f / (n·l)"
+      ],
+      "answer": 0,
+      "explain": "ポイントライト1灯なので積分が消え、BRDF f・ライト色 Lc・(n·l) の掛け算になります。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

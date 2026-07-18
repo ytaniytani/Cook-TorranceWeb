@@ -229,6 +229,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch02.html">← 第2章へ</a>
     <a href="ch04.html">第4章へ →</a>
@@ -248,6 +253,44 @@
   Widgets.hemisphereIntegral("w3a");
   Widgets.lightContribution("w3b");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第3章 理解度チェック",
+  "questions": [
+    {
+      "q": "このサイトでの「積分」の意味は？",
+      "opts": [
+        "微分の逆を計算すること",
+        "細かく分けて全部足し合わせること",
+        "面積を推測すること"
+      ],
+      "answer": 1,
+      "explain": "本サイトでは積分＝「細かく分けて足す」だけの意味で使います。極限や微分は扱いません。"
+    },
+    {
+      "q": "面の一点における「半球」とは何を指しますか？",
+      "opts": [
+        "その点に光が届きうる全方向",
+        "地球の半分",
+        "カメラが映せる範囲"
+      ],
+      "answer": 0,
+      "explain": "面の一点には、その面の上側＝半球のあらゆる方向から光が届きえます。それらを全部足すのが反射方程式です。"
+    },
+    {
+      "q": "ポイントライトが1灯だけのとき、方向についての足し算（積分）はどうなりますか？",
+      "opts": [
+        "方向が1つだけなので積分が消える",
+        "無限に増える",
+        "2倍になる"
+      ],
+      "answer": 0,
+      "explain": "光源が1方向だけなら足す相手が1つなので積分記号が消え、Lo = f·Lc·(n·l) という単純な式になります。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

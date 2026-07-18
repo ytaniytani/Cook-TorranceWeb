@@ -163,6 +163,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch07.html">← 第7章へ</a>
     <a href="ch09.html">第9章へ →</a>
@@ -228,6 +233,54 @@
     });
   });
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第8章 理解度チェック",
+  "questions": [
+    {
+      "q": "GGX の式で使う α は何ですか？",
+      "opts": [
+        "roughness そのもの",
+        "roughness の2乗",
+        "roughness の逆数"
+      ],
+      "answer": 1,
+      "explain": "α = roughness²。スライダー全域で見た目が均等に変化するようにする業界慣習です。"
+    },
+    {
+      "q": "roughness を小さくすると D 項の山（ハイライト）はどうなりますか？",
+      "opts": [
+        "低くて広い山になる",
+        "高く鋭い針状の山になる",
+        "変わらない"
+      ],
+      "answer": 1,
+      "explain": "roughness が小さいほど向きが揃い、n·h が1付近だけ極端に高い＝小さく鋭いハイライトになります。"
+    },
+    {
+      "q": "GGX が Beckmann に対して持つ「個性」は？",
+      "opts": [
+        "裾（すそ）が長く、ハイライトの外に光の尾が残る",
+        "完全に真っ黒になる",
+        "色が変わる"
+      ],
+      "answer": 0,
+      "explain": "GGX は山のふもとがゼロに落ちきらず遠くまで残るため、実測に近いふわっとした光の尾が出ます。"
+    },
+    {
+      "q": "1982年のオリジナル Cook-Torrance 論文が D に使っていた分布は？",
+      "opts": [
+        "GGX",
+        "Beckmann 分布",
+        "Blinn-Phong"
+      ],
+      "answer": 1,
+      "explain": "原論文は Beckmann 分布。GGX（Trowbridge-Reitz）は2007年に再発見され、以後の標準になりました。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

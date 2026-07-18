@@ -226,6 +226,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch01.html">← 第1章へ</a>
     <a href="ch03.html">第3章へ →</a>
@@ -246,6 +251,44 @@
   Widgets.dotProduct("w2a");
   Widgets.lambertBall("w2b");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第2章 理解度チェック",
+  "questions": [
+    {
+      "q": "内積 n·l は何を表しますか？",
+      "opts": [
+        "2つのベクトルの長さの合計",
+        "2つの向きの揃い具合（cosθ）",
+        "2つのベクトルの間の距離"
+      ],
+      "answer": 1,
+      "explain": "どちらも単位ベクトルなら n·l = cosθ。1に近いほど向きが揃い、0で直角、負で反対向きです。"
+    },
+    {
+      "q": "コードで max(0, n·l) と書くのはなぜ？",
+      "opts": [
+        "計算を速くするため",
+        "面の裏側（n·l が負）を「照らされない＝0」にするため",
+        "値を必ず1にするため"
+      ],
+      "answer": 1,
+      "explain": "n·l が負になるのは光が面の裏から来る場合。裏面は照らされないので 0 にクランプします。"
+    },
+    {
+      "q": "cos(90°) の値は？",
+      "opts": [
+        "1",
+        "0",
+        "−1"
+      ],
+      "answer": 1,
+      "explain": "cos は 0°→1、90°→0、180°→−1。真横（直角）から当たる光は寄与ゼロになります。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

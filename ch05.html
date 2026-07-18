@@ -127,6 +127,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch04.html">← 第4章へ</a>
     <a href="ch06.html">第6章へ →</a>
@@ -140,6 +145,44 @@
 (function(){
   Widgets.brdfLobe("w5a");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第5章 理解度チェック",
+  "questions": [
+    {
+      "q": "BRDF とは何を返す関数ですか？",
+      "opts": [
+        "入射方向と出射方向のペアごとの反射率",
+        "三角形の面積",
+        "カメラの向き"
+      ],
+      "answer": 0,
+      "explain": "BRDF は「この向きから来た光を、この向きへどれだけ返すか」を表す材質の関数です。"
+    },
+    {
+      "q": "BRDF を2つの成分に分けると？",
+      "opts": [
+        "赤成分と青成分",
+        "ディフューズ（拡散）とスペキュラ（鏡面）",
+        "昼と夜"
+      ],
+      "answer": 1,
+      "explain": "f = kd·f_diffuse + f_specular。表面下でぼやける拡散と、表面で鋭く反射する鏡面に分けます。"
+    },
+    {
+      "q": "鏡のような材質のローブ（反射の分布）はどんな形？",
+      "opts": [
+        "半球全体に均一に広がる",
+        "反射方向へ鋭く尖る",
+        "下向きに伸びる"
+      ],
+      "answer": 1,
+      "explain": "鏡は一方向にほぼ集中して反射するので、ローブは反射方向へ細く尖ります。粗い面ほど広がります。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

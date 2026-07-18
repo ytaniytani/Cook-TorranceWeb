@@ -148,55 +148,8 @@
     </table>
   </section>
 
-  <section class="quiz-section">
-    <h3>理解度チェック（選択肢）</h3>
-    <div class="quiz-q">Q1. Cook-Torrance BRDF は、何を計算するモデルですか？</div>
-    <div class="quiz-opts">
-      <div class="quiz-opt">
-        <input type="radio" id="q1a" name="q1" value="a">
-        <label for="q1a">画面の明るさをランダムに決める方法</label>
-      </div>
-      <div class="quiz-opt">
-        <input type="radio" id="q1b" name="q1" value="b">
-        <label for="q1b"><strong>（正解）この方向からの光は、この方向へどれだけ反射するか</strong></label>
-      </div>
-      <div class="quiz-opt">
-        <input type="radio" id="q1c" name="q1" value="c">
-        <label for="q1c">光が完全に反射する角度を計算する方法</label>
-      </div>
-    </div>
-
-    <div class="quiz-q">Q2. このサイトの「完全理解」の定義に含まれないのはどれですか？</div>
-    <div class="quiz-opts">
-      <div class="quiz-opt">
-        <input type="radio" id="q2a" name="q2" value="a">
-        <label for="q2a">パラメータを変えたとき、見た目がどう変わるか予測できる</label>
-      </div>
-      <div class="quiz-opt">
-        <input type="radio" id="q2b" name="q2" value="b">
-        <label for="q2b">GLSL コードと数式の対応が取れる</label>
-      </div>
-      <div class="quiz-opt">
-        <input type="radio" id="q2c" name="q2" value="c">
-        <label for="q2c"><strong>（正解）リアルタイムで複数の環境マップを合成できる</strong></label>
-      </div>
-    </div>
-
-    <div class="quiz-q">Q3. 以下の企業の製品のうち、Cook-Torrance を採用<strong>していない</strong>ものはどれですか？</div>
-    <div class="quiz-opts">
-      <div class="quiz-opt">
-        <input type="radio" id="q3a" name="q3" value="a">
-        <label for="q3a">Unreal Engine</label>
-      </div>
-      <div class="quiz-opt">
-        <input type="radio" id="q3b" name="q3" value="b">
-        <label for="q3b">Unity</label>
-      </div>
-      <div class="quiz-opt">
-        <input type="radio" id="q3c" name="q3" value="c">
-        <label for="q3c"><strong>（正解）このサイトには、採用していないものはない（全部採用）</strong></label>
-      </div>
-    </div>
+  <section>
+    <div id="chap-quiz"></div>
   </section>
 
   <section>
@@ -264,6 +217,29 @@
   window.addEventListener("resize",resize);
   requestAnimationFrame(function(){ resize(); loop(); });
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  title: "第0章 理解度チェック",
+  questions: [
+    { q: "Cook-Torrance BRDF は、何を計算するモデルですか？", opts:[
+      "画面の明るさをランダムに決める方法",
+      "この方向から来た光が、この方向へどれだけ反射するか",
+      "光が完全に反射する角度だけを求める方法"],
+      answer:1, explain:"BRDF は「入射方向と出射方向のペアごとの反射率」を返す材質の関数です。"},
+    { q: "このサイトの「完全理解」の定義に<strong>含まれない</strong>のはどれですか？", opts:[
+      "パラメータを変えたとき、見た目がどう変わるか予測できる",
+      "GLSL コードと数式の対応が取れる",
+      "リアルタイムで複数の環境マップを合成できる"],
+      answer:2, explain:"IBL/環境マップの合成は本編の学習目標ではありません（補足で入口だけ触れます）。式の記号理解・見た目の予測・コード対応が3つの柱です。"},
+    { q: "次のうち、Cook-Torrance（GGXマイクロファセット）を採用<strong>していない</strong>ものはどれですか？", opts:[
+      "Unreal Engine",
+      "Unity",
+      "上のどれも採用している（該当なし）"],
+      answer:2, explain:"UE・Unity・Substance など主要なリアルタイムCGは、いずれも GGX ベースのマイクロファセットBRDFを採用しています。"}
+  ]
+});
 </script>
 </body>
 </html>

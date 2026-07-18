@@ -228,6 +228,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch00.html">← 第0章へ</a>
     <a href="ch02.html">第2章へ →</a>
@@ -248,6 +253,54 @@
   Widgets.vectorTool3D("w1a_3d");
   Widgets.vectorBall("w1b");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第1章 理解度チェック",
+  "questions": [
+    {
+      "q": "ベクトルの「正規化」とは何をする操作ですか？",
+      "opts": [
+        "長さを2倍にする",
+        "長さを1にして、向きだけを取り出す",
+        "x成分だけを取り出す"
+      ],
+      "answer": 1,
+      "explain": "正規化は各成分を長さで割り、長さ1の単位ベクトルにします。n, l, v, h はすべて「向き」を表すので正規化して使います。"
+    },
+    {
+      "q": "3Dベクトル (x, y, z) の長さの求め方は？",
+      "opts": [
+        "x + y + z",
+        "√(x² + y² + z²)",
+        "x × y × z"
+      ],
+      "answer": 1,
+      "explain": "三平方の定理の3D版です。2Dの √(x²+y²) に z を足して √(x²+y²+z²) になります。"
+    },
+    {
+      "q": "ハーフベクトル h はどう作りますか？",
+      "opts": [
+        "l と v を足して正規化する",
+        "n と l を掛ける",
+        "v から l を引く"
+      ],
+      "answer": 0,
+      "explain": "h = normalize(l + v)。l と v のちょうど中間を向くベクトルで、第7章のマイクロファセット理論で主役になります。"
+    },
+    {
+      "q": "法線ベクトル n が表すものは？",
+      "opts": [
+        "光が来る向き",
+        "面が向いている向き（面に垂直）",
+        "カメラの位置"
+      ],
+      "answer": 1,
+      "explain": "n は面に垂直な「面の向き」。l はライト方向、v は視線方向です。"
+    }
+  ]
+});
 </script>
 </body>
 </html>
