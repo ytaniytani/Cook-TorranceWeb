@@ -148,6 +148,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch08.html">← 第8章へ</a>
     <a href="ch10.html">第10章へ →</a>
@@ -177,6 +182,44 @@
     if(v9b){ v9b.state.metal = parseFloat(this.value); v9b.draw(); }
   });
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第9章 理解度チェック",
+  "questions": [
+    {
+      "q": "フレネル効果とは、浅い角度で見ると物体がどうなる現象ですか？",
+      "opts": [
+        "透明になる",
+        "何でも鏡のように強く反射する",
+        "色が濃くなる"
+      ],
+      "answer": 1,
+      "explain": "水面や机も、視線が浅い（かすめる）角度になるほど反射率が上がり、鏡のように映り込みます。"
+    },
+    {
+      "q": "非金属（誘電体）の F0（垂直入射時の反射率）はおよそいくつ？",
+      "opts": [
+        "約 0.04",
+        "約 0.5",
+        "約 1.0"
+      ],
+      "answer": 0,
+      "explain": "ほとんどの非金属は F0 ≈ 0.04。金属は F0 がベースカラーそのものになります。"
+    },
+    {
+      "q": "metallic を 1 にすると何が起きますか？",
+      "opts": [
+        "拡散が消え、F0 がベースカラーになる",
+        "面が真っ白になる",
+        "ライトが消える"
+      ],
+      "answer": 0,
+      "explain": "金属は自由電子が光を吸収するため拡散（diffuse）が消滅し、反射色（F0）がベースカラーになります。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

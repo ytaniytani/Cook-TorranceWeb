@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第12章 総合ビューポート & 卒業 - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono); line-height:1.8; overflow-x:auto; }
+  /* 数式⇔コード対応 */
+  .map-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; margin:1.2em 0; }
+  @media (max-width:900px){ .map-grid{ grid-template-columns:1fr; } }
+  .term-bar{ display:flex; flex-wrap:wrap; gap:8px; margin:1em 0; }
+  .term-bar button{ font-family:var(--mono); font-size:12.5px; color:var(--ink-dim);
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; transition:.12s; }
+  .term-bar button:hover{ color:var(--ink); border-color:var(--line-2); }
+  .term-bar button.on{ color:#12160e; background:var(--spec); border-color:var(--spec); font-weight:600; }
+  .codebox{ background:#06080b; border:1px solid var(--line); border-radius:10px; padding:14px 0; overflow-x:auto; }
+  .codebox pre{ margin:0; font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--ink); }
+  .cl{ display:block; padding:0 16px; white-space:pre; border-left:3px solid transparent; }
+  .cl .cm{ color:var(--ink-mute); }
+  .cl .ty{ color:var(--spec); }
+  .cl .fn{ color:var(--photon); }
+  .cl.hl{ background:rgba(121,210,255,.12); border-left-color:var(--spec); }
+  .mathcard{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+  .mathcard .m{ font-family:var(--mono); border-radius:8px; padding:10px 12px; margin:8px 0; background:var(--panel-2);
+    border-left:3px solid transparent; transition:.12s; }
+  .mathcard .m.hl{ border-left-color:var(--spec); background:rgba(121,210,255,.10); }
+  .mathcard .m .lab{ display:block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute); margin-bottom:3px; }
+  .cert{ text-align:center; border:1px solid var(--spec); border-radius:14px; padding:34px 24px; margin:2.5em 0;
+    background:linear-gradient(180deg, rgba(121,210,255,.06), rgba(255,197,90,.04)); }
+  .cert .seal{ font-family:var(--mono); font-size:12px; letter-spacing:.24em; text-transform:uppercase; color:var(--spec); }
+  .cert h2{ border:none; margin:.3em 0; }
+  .cert p{ color:var(--ink-dim); max-width:52ch; margin:.6em auto; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">第12章</span>
+    <h1>総合ビューポート & 卒業</h1>
+    <p class="lead">ここまで学んだ D・F・G・kd・ディフューズが、1つのシェーダに合流します。
+    式のどの記号が、コードのどの行なのか——最後にその対応を完全に取ります。</p>
+  </section>
+
+  <section>
+    <h2>全機能ビューポート</h2>
+    <p>
+      第0〜11章で学んだすべてがここに集まっています。表示モードを切り替えて各項を分離し、
+      球体をクリックして<strong>ピクセル検査</strong>で全中間値を確認してください。
+      環境マップ（IBL）は補足の内容ですが、反射の様子を見やすくするために使えます。
+    </p>
+    <div id="vp" style="margin-top:20px"></div>
+  </section>
+
+  <section>
+    <h2>数式 ⇔ コードの対応</h2>
+    <p>
+      下のボタンを押すと、<strong>数式の項</strong>と、それに対応する <strong>GLSL のコード行</strong>が
+      同時に光ります。「この記号は、コードのここ」という対応を、目で確かめてください。
+    </p>
+
+    <div class="term-bar" id="termBar">
+      <button data-k="vec" class="on">n·l, n·v, n·h, v·h（内積）</button>
+      <button data-k="param">α, F0（パラメータ準備）</button>
+      <button data-k="D">D 項（GGX）</button>
+      <button data-k="F">F 項（フレネル）</button>
+      <button data-k="G">G 項（幾何減衰）</button>
+      <button data-k="spec">スペキュラ合成</button>
+      <button data-k="kd">kd（配分係数）</button>
+      <button data-k="diff">ディフューズ</button>
+      <button data-k="out">最終色 Lo</button>
+    </div>
+
+    <div class="map-grid">
+      <div class="mathcard">
+        <div class="flabel" style="font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px;">数式</div>
+        <div class="m" data-k="vec"><span class="lab">内積（第2章）</span>n·l, n·v, n·h, v·h</div>
+        <div class="m" data-k="param"><span class="lab">パラメータ準備</span>α = roughness²　F0 = mix(0.04, albedo, metallic)</div>
+        <div class="m" data-k="D"><span class="lab">D 項 / 第8章</span>D = α² / (π·((n·h)²(α²−1)+1)²)</div>
+        <div class="m" data-k="F"><span class="lab">F 項 / 第9章</span>F = F0 + (1−F0)(1−v·h)⁵</div>
+        <div class="m" data-k="G"><span class="lab">G 項 / 第10章</span>G = G1(n·l)·G1(n·v)</div>
+        <div class="m" data-k="spec"><span class="lab">スペキュラ / 第7章</span>spec = D·F·G / (4·(n·l)·(n·v))</div>
+        <div class="m" data-k="kd"><span class="lab">配分係数 / 第11章</span>kd = (1−F)(1−metallic)</div>
+        <div class="m" data-k="diff"><span class="lab">ディフューズ / 第6章</span>diff = kd·albedo / π</div>
+        <div class="m" data-k="out"><span class="lab">出射光 / 第4章</span>Lo = (diff + spec)·Lc·(n·l)</div>
+      </div>
+
+      <div class="codebox"><pre id="code"><span class="cl" data-k="head"><span class="cm">// フラグメントシェーダ（js/shaders.js より抜粋）</span></span>
+<span class="cl" data-k="head"><span class="ty">void</span> <span class="fn">main</span>(){</span>
+<span class="cl" data-k="vec">  <span class="ty">vec3</span> N = normalize(vNormal);</span>
+<span class="cl" data-k="vec">  <span class="ty">vec3</span> V = normalize(uCamPos - vWorldPos);</span>
+<span class="cl" data-k="vec">  <span class="ty">vec3</span> L = normalize(uLightDir);</span>
+<span class="cl" data-k="vec">  <span class="ty">vec3</span> H = normalize(V + L);</span>
+<span class="cl" data-k="vec">  <span class="ty">float</span> NoL = max(dot(N,L), 0.0);</span>
+<span class="cl" data-k="vec">  <span class="ty">float</span> NoV = max(dot(N,V), 1e-4);</span>
+<span class="cl" data-k="vec">  <span class="ty">float</span> NoH = max(dot(N,H), 0.0);</span>
+<span class="cl" data-k="vec">  <span class="ty">float</span> VoH = max(dot(V,H), 0.0);</span>
+<span class="cl" data-k="param">  <span class="ty">float</span> a  = uRough * uRough;              <span class="cm">// α = roughness²</span></span>
+<span class="cl" data-k="param">  <span class="ty">vec3</span>  F0 = mix(vec3(0.04), uBaseColor, uMetal);</span>
+<span class="cl" data-k="D">  <span class="ty">float</span> D = D_GGX(NoH, a);                  <span class="cm">// 第8章</span></span>
+<span class="cl" data-k="G">  <span class="ty">float</span> G = G_Smith(NoL, NoV, uRough);      <span class="cm">// 第10章</span></span>
+<span class="cl" data-k="F">  <span class="ty">vec3</span>  F = F_Schlick(VoH, F0);             <span class="cm">// 第9章</span></span>
+<span class="cl" data-k="spec">  <span class="ty">vec3</span> spec = (D*G)*F / max(4.0*NoL*NoV, 1e-4);</span>
+<span class="cl" data-k="kd">  <span class="ty">vec3</span> kd = (vec3(1.0)-F)*(1.0-uMetal);    <span class="cm">// 第11章</span></span>
+<span class="cl" data-k="diff">  <span class="ty">vec3</span> diff = kd*uBaseColor/PI;           <span class="cm">// 第6章 Lambert</span></span>
+<span class="cl" data-k="out">  <span class="ty">vec3</span> radiance = uLightColor*uLightInt;</span>
+<span class="cl" data-k="out">  <span class="ty">vec3</span> Lo = (diff + spec)*radiance*NoL;   <span class="cm">// 第4章</span></span>
+<span class="cl" data-k="out">  gl_FragColor = vec4(tone(Lo), 1.0);</span>
+<span class="cl" data-k="head">}</span></pre></div>
+    </div>
+    <p style="color:var(--ink-dim);font-size:13px;">
+      ※ 見やすさのため、平行光のみ・IBLなしの中核部分を抜粋しています。実装の全文（点光源・環境光を含む）は
+      リポジトリの <span class="k">js/shaders.js</span> にあります。下にヘルパー関数の全文も掲載します。
+    </p>
+  </section>
+
+  <section>
+    <h2>ヘルパー関数の全文（D・F・G）</h2>
+    <p>3つの項の中身です。第8〜10章で1つずつ分解した式が、そのままコードになっています。</p>
+    <div class="codebox"><pre><span class="cl"><span class="cm">// --- D項：GGX / Trowbridge-Reitz（第8章） ---</span></span>
+<span class="cl"><span class="ty">float</span> <span class="fn">D_GGX</span>(<span class="ty">float</span> NoH, <span class="ty">float</span> a){</span>
+<span class="cl">  <span class="ty">float</span> a2 = a*a;</span>
+<span class="cl">  <span class="ty">float</span> d = NoH*NoH*(a2-1.0)+1.0;</span>
+<span class="cl">  <span class="ty">return</span> a2 / (PI*d*d);</span>
+<span class="cl">}</span>
+<span class="cl"> </span>
+<span class="cl"><span class="cm">// --- G項：Smith + Schlick-GGX（第10章） ---</span></span>
+<span class="cl"><span class="ty">float</span> <span class="fn">G1</span>(<span class="ty">float</span> NoX, <span class="ty">float</span> k){ <span class="ty">return</span> NoX/(NoX*(1.0-k)+k); }</span>
+<span class="cl"><span class="ty">float</span> <span class="fn">G_Smith</span>(<span class="ty">float</span> NoL, <span class="ty">float</span> NoV, <span class="ty">float</span> rough){</span>
+<span class="cl">  <span class="ty">float</span> k = (rough+1.0)*(rough+1.0)/8.0;</span>
+<span class="cl">  <span class="ty">return</span> G1(NoL,k)*G1(NoV,k);</span>
+<span class="cl">}</span>
+<span class="cl"> </span>
+<span class="cl"><span class="cm">// --- F項：Schlick 近似（第9章） ---</span></span>
+<span class="cl"><span class="ty">vec3</span> <span class="fn">F_Schlick</span>(<span class="ty">float</span> VoH, <span class="ty">vec3</span> F0){</span>
+<span class="cl">  <span class="ty">return</span> F0 + (1.0-F0)*pow(1.0-VoH, 5.0);</span>
+<span class="cl">}</span></pre></div>
+  </section>
+
+  <div class="cert">
+    <div class="seal">Final Exam · 卒業クイズ</div>
+    <h2>卒業クイズ（全章横断・10問）</h2>
+    <p>全問正解すれば、あなたは Cook-Torrance BRDF の全記号を自分の言葉で説明できる状態です。
+    間違えた問題は、解説のリンク先の章に戻って復習しましょう。</p>
+  </div>
+
+  <div id="grad-quiz"></div>
+
+  <section>
+    <h2>おわりに</h2>
+    <p>
+      おつかれさまでした。フォトリアルな絵の正体は、ここまで見てきた<strong>四則演算の積み重ね</strong>でした。
+      「なんとなくキレイ」だったものが、「この項がこう効いている」と言葉にできるようになったはずです。
+    </p>
+    <p>
+      さらに深めたい人は、<a href="appendix.html">補足（Appendix）</a>で
+      「なぜ π で割るのか」「分母 4(n·l)(n·v) の由来」「IBL への入口」などの導出を追ってください。
+    </p>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch11.html">← 第11章へ</a>
+    <a href="appendix.html">補足へ →</a>
+  </div>
+
+</div></main>
+
+<script src="js/glmini.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/envmap.js"></script>
+<script src="js/ibl.js"></script>
+<script src="js/math.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/quiz.js"></script>
+<script>
+(function(){
+  /* 全機能ビューポート */
+  Viewport.mount("#vp", { controls:true, modes:true, readout:true });
+
+  /* 数式⇔コードの対応ハイライト */
+  var codeLines = document.querySelectorAll("#code .cl");
+  var mathRows = document.querySelectorAll(".mathcard .m");
+  function highlight(k){
+    codeLines.forEach(function(l){ l.classList.toggle("hl", l.getAttribute("data-k")===k); });
+    mathRows.forEach(function(m){ m.classList.toggle("hl", m.getAttribute("data-k")===k); });
+    document.querySelectorAll("#termBar button").forEach(function(b){
+      b.classList.toggle("on", b.getAttribute("data-k")===k);
+    });
+  }
+  document.querySelectorAll("#termBar button").forEach(function(b){
+    b.addEventListener("click", function(){ highlight(b.getAttribute("data-k")); });
+  });
+  // 数式カードのクリックでも連動
+  mathRows.forEach(function(m){
+    m.style.cursor="pointer";
+    m.addEventListener("click", function(){ highlight(m.getAttribute("data-k")); });
+  });
+  highlight("vec"); // 初期表示
+
+  /* 卒業クイズ（全章横断10問） */
+  Quiz.mount("#grad-quiz", {
+    title: "卒業クイズ",
+    questions: [
+      { q: "正規化されたベクトル同士の内積 n·l が表すものは？（第2章）", opts:[
+        "2つの長さの和","向きの揃い具合（cosθ）","距離"],
+        answer:1, explain:"n·l = cosθ。1で同じ向き、0で直角、負で裏側。CGで最頻出の演算です。"},
+      { q: "反射方程式 Lo = f·Lc·(n·l) の (n·l) の役割は？（第4章）", opts:[
+        "斜め入射で光が薄まる効果","色を混ぜる","反射を鋭くする"],
+        answer:0, explain:"斜めに当たる光ほど単位面積あたりが薄まります。それが (n·l) です。"},
+      { q: "Lambert 拡散で albedo を π で割る理由は？（第6章）", opts:[
+        "計算高速化","エネルギー保存（配りすぎ防止の正規化）","色を暗くするため"],
+        answer:1, explain:"半球全体に均等配分すると合計が π 倍になるため、π で割って入力以上に返さないようにします。"},
+      { q: "マイクロファセット理論で、光るのはどの向きのマイクロファセット？（第7章）", opts:[
+        "n を向いた面","h（ハーフベクトル）を向いた面","v を向いた面"],
+        answer:1, explain:"h を向いた面だけが l から来た光をちょうど v へ反射します。だから D は h を向いた面の割合を測ります。"},
+      { q: "GGX の α は roughness とどんな関係？（第8章）", opts:[
+        "α = roughness","α = roughness²","α = √roughness"],
+        answer:1, explain:"α = roughness²。スライダー全域で見た目が均等に変化する業界慣習です。"},
+      { q: "1982年オリジナル Cook-Torrance が D に使った分布は？（第8章コラム）", opts:[
+        "GGX","Beckmann","Phong"],
+        answer:1, explain:"原論文は Beckmann。GGX は2007年に再発見され、裾の長さ（リアルさ）で標準になりました。"},
+      { q: "非金属（誘電体）の F0 はおよそ？（第9章）", opts:[
+        "約0.04","約0.5","約1.0"],
+        answer:0, explain:"多くの非金属は F0 ≈ 0.04。金属では F0 がベースカラーそのものになります。"},
+      { q: "G 項の影響で暗くなりやすい条件は？（第10章）", opts:[
+        "浅い角度＋高 roughness","正面＋低 roughness","常に一定"],
+        answer:0, explain:"浅い角度で粗い表面ほど、凸凹が光を遮り合って（シャドウイング/マスキング）暗くなります。"},
+      { q: "kd = (1−F)(1−metallic) が表すのは？（第11章）", opts:[
+        "スペキュラに使った光は拡散に回さない","光を2倍にする","色を反転する"],
+        answer:0, explain:"表面で反射した分 F は表面下に入らないので、残り (1−F) だけが拡散に回ります。金属は拡散ゼロ。"},
+      { q: "最終的なスペキュラの式 D·F·G/(4(n·l)(n·v)) の分母 4(n·l)(n·v) の位置づけは？（第7章）", opts:[
+        "色を決める主役","単位を合わせる補正項","無くても同じ"],
+        answer:1, explain:"分母はマイクロファセットの面積・投影を揃える補正項。導出は補足に隔離しています。"}
+    ]
+  });
+})();
+</script>
+</body>
+</html>

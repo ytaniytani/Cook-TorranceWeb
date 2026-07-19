@@ -140,9 +140,14 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch10.html">← 第10章へ</a>
-    <a href="index.html">目次へ →</a>
+    <a href="ch12.html">第12章へ →</a>
   </div>
 
 </div></main>
@@ -153,6 +158,44 @@
 (function(){
   Widgets.stepCalc("w11_table");
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第11章 理解度チェック",
+  "questions": [
+    {
+      "q": "kd = (1 − F)(1 − metallic) が表すエネルギー保存の考え方は？",
+      "opts": [
+        "スペキュラ（鏡面反射）に使われた光は、拡散には回さない",
+        "光を2倍に増やす",
+        "色を反転する"
+      ],
+      "answer": 0,
+      "explain": "表面で鏡面反射した分（F）は表面下に入らないので、その残り (1−F) だけが拡散に回ります。"
+    },
+    {
+      "q": "metallic = 1 のとき拡散成分はどうなりますか？",
+      "opts": [
+        "2倍になる",
+        "0 になる（消滅する）",
+        "変わらない"
+      ],
+      "answer": 1,
+      "explain": "kd に (1 − metallic) が掛かるため、metallic=1 で kd=0、拡散が完全に消えます。"
+    },
+    {
+      "q": "最終的な出射光 Lo の式は？",
+      "opts": [
+        "Lo = f · Lc · (n·l)",
+        "Lo = f − Lc",
+        "Lo = (n·l) / f"
+      ],
+      "answer": 0,
+      "explain": "合成した BRDF f に、ライト色 Lc と (n·l) を掛けたものが最終的なピクセルの明るさ Lo です。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

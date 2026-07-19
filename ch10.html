@@ -133,6 +133,11 @@
     </ul>
   </section>
 
+
+  <section>
+    <div id="chap-quiz"></div>
+  </section>
+
   <div class="chapter-nav">
     <a href="ch09.html">← 第9章へ</a>
     <a href="ch11.html">第11章へ →</a>
@@ -159,6 +164,44 @@
     if(v10c){ v10c.state.rough = parseFloat(this.value); v10c.draw(); }
   });
 })();
+</script>
+<script src="js/quiz.js"></script>
+<script>
+Quiz.mount("#chap-quiz", {
+  "title": "第10章 理解度チェック",
+  "questions": [
+    {
+      "q": "G 項（幾何減衰）が表すのはどんな現象ですか？",
+      "opts": [
+        "凸凹による影（シャドウイング）と遮蔽（マスキング）",
+        "色の変化",
+        "距離による減衰"
+      ],
+      "answer": 0,
+      "explain": "微細な凸凹が、入射光を遮ったり（シャドウイング）、反射光を遮ったり（マスキング）して暗くします。"
+    },
+    {
+      "q": "G 項の影響で暗くなりやすいのはどんな条件？",
+      "opts": [
+        "浅い角度＋高い roughness",
+        "真正面＋低い roughness",
+        "どんなときも一定"
+      ],
+      "answer": 0,
+      "explain": "角度が浅く表面が粗いほど、凸凹どうしが光を遮り合って暗くなります。"
+    },
+    {
+      "q": "Smith モデルで G を2つの積で表すのは何と何の遮蔽ですか？",
+      "opts": [
+        "赤と青",
+        "入射側 G1(l) と出射側 G1(v)",
+        "上と下"
+      ],
+      "answer": 1,
+      "explain": "G = G1(l)·G1(v)。光が入る側（シャドウイング）と出る側（マスキング）を別々に評価して掛けます。"
+    }
+  ]
+});
 </script>
 </body>
 </html>

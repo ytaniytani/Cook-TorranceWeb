@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>補足 Appendix - Cook-Torrance 完全理解</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .chapter-nav{ display:flex; gap:1em; justify-content:space-between; margin:2em 0; }
+  .chapter-nav a{ padding:10px 16px; border:1px solid var(--line); border-radius:8px; display:inline-flex; align-items:center; gap:.5em; }
+  .chapter-nav a:hover{ background:var(--panel-2); text-decoration:none; }
+  .formula{ background:var(--panel-2); padding:16px; border-radius:8px; margin:1em 0; font-family:var(--mono); line-height:1.9; overflow-x:auto; }
+  .formula .jp{ color:var(--ink-dim); font-size:.9em; font-family:var(--sans); }
+  .note.warn{ border-left-color:var(--bad); }
+  .note.warn .tag{ color:var(--bad); }
+  .toc-mini{ display:flex; flex-wrap:wrap; gap:8px; margin:1.4em 0; }
+  .toc-mini a{ font-family:var(--mono); font-size:12.5px; color:var(--ink-dim);
+    border:1px solid var(--line); border-radius:8px; padding:7px 12px; }
+  .toc-mini a:hover{ color:var(--photon); border-color:var(--photon); text-decoration:none; }
+  .refs{ list-style:none; padding-left:0; }
+  .refs li{ border-left:2px solid var(--line-2); padding:.4em 0 .4em 14px; margin:.8em 0; color:var(--ink-dim); font-size:14px; }
+  .refs b{ color:var(--ink); }
+  dl.terms dt{ font-family:var(--mono); color:var(--spec); margin-top:1em; font-weight:600; }
+  dl.terms dd{ margin:.3em 0 0; color:var(--ink); }
+</style>
+</head>
+<body>
+
+<header class="topbar"><div class="inner">
+  <a class="brand" href="index.html"><b>Cook-Torrance</b><span>/</span>完全理解</a>
+  <nav class="topnav">
+    <a href="index.html">目次</a>
+    <a href="viewport.html">ビューポート</a>
+  </nav>
+</div></header>
+
+<main class="page"><div class="wrap">
+
+  <section>
+    <span class="eyebrow">Appendix</span>
+    <h1>補足：本文で「後回し」にした導出たち</h1>
+    <p class="lead">本編では直感を優先し、いくつかの「なぜ？」を保留しました。
+    ここではそれらを、中学数学＋αの範囲で、できるだけ丁寧に埋めていきます。読み飛ばしても本編の理解には影響しません。</p>
+    <div class="toc-mini">
+      <a href="#pi">① なぜ π で割るのか</a>
+      <a href="#denom">② 分母 4(n·l)(n·v) の由来</a>
+      <a href="#solid">③ 立体角の定義</a>
+      <a href="#radio">④ 放射輝度・放射照度</a>
+      <a href="#ibl">⑤ IBL への入口</a>
+      <a href="#refs">⑥ 参考文献</a>
+    </div>
+  </section>
+
+  <section id="pi">
+    <h2>① なぜ Lambert 拡散は π で割るのか</h2>
+    <p>
+      第6章では「配りすぎ防止の正規化」とだけ言いました。もう少し踏み込みます。
+    </p>
+    <p>
+      拡散面は、入ってきた光を<strong>半球のあらゆる方向へ均等に</strong>返します（これが Lambert の定義）。
+      BRDF を定数 <span class="var">f</span> と置くと、返る光の合計は「半球の全方向について f·(n·l) を足したもの」です。
+      この「足す」を実行すると、次の値になることが知られています：
+    </p>
+    <div class="formula">
+      ∫<sub>半球</sub> (n·l) dω = π
+      <div class="jp">半球全体で (n·l)＝cosθ を足し合わせると、ちょうど π になる（cos で重み付けした半球の「広さ」が π）</div>
+    </div>
+    <p>
+      つまり、BRDF を f にすると、反射光の合計は <span class="k">f · π</span> になります。
+      エネルギー保存（入った光より多くを返さない）を満たすには、この合計が albedo（反射率）以下でなければなりません。
+      そこで <span class="k">f = albedo / π</span> と置くと：
+    </p>
+    <div class="formula">
+      合計 = (albedo / π) · π = albedo　✓
+      <div class="jp">π で割っておいたおかげで、半球全体に配った合計がちょうど albedo に収まる</div>
+    </div>
+    <div class="note">
+      <span class="tag">要点</span>
+      π は円周率そのものではなく、「cos で重み付けした半球を全部足すと π になる」という積分の結果として現れます。
+      だから拡散の正規化定数は π なのです。
+    </div>
+  </section>
+
+  <section id="denom">
+    <h2>② スペキュラの分母 4(n·l)(n·v) はどこから来たのか</h2>
+    <p>
+      第7章では「単位合わせの補正項」とだけ説明しました。由来を追います。
+    </p>
+    <p>
+      マイクロファセット BRDF は、次の考え方で組み立てられます：
+    </p>
+    <ul>
+      <li><strong>D(h)</strong>：ハーフベクトル h を向いたマイクロファセットが、どれだけの「面積密度」であるか</li>
+      <li><strong>G</strong>：そのうち、光が入る側・出る側で遮られずに見えている割合</li>
+      <li><strong>F</strong>：その微小な鏡に当たった光の、反射する割合</li>
+    </ul>
+    <p>
+      これらを掛け合わせて、微小な鏡の集合が返す光を求めるとき、
+      「マクロな面（我々が見ている面）の単位面積」と「マイクロファセットの単位面積」の間で、
+      向きの変換にともなう<strong>面積の投影の補正</strong>が必要になります。
+    </p>
+    <p>
+      幾何学的に丁寧に積み上げると、この補正はちょうど次の因子になります：
+    </p>
+    <div class="formula">
+      f<sub>spec</sub> = D · F · G / ( 4 · (n·l) · (n·v) )
+      <div class="jp">4 は h を経由した向きの変換（半角）から出る係数、(n·l)(n·v) は入射側・出射側それぞれの投影補正</div>
+    </div>
+    <p>
+      (n·l) は光が入る側、(n·v) は光が出る側の、面の傾きによる投影の薄まりを打ち消します。
+      4 という数は、l と v の「中間」である h を経由して向きを言い換えるとき（ヤコビアンと呼ばれる変換係数）に現れる定数です。
+    </p>
+    <div class="note warn">
+      <span class="tag">正直な注記</span>
+      この 4 とヤコビアンの完全な導出には、立体角の微分と変数変換（高校〜大学の微積分）が必要です。
+      本サイトの範囲を超えるため、ここでは「向きの言い換えで必ず出てくる決まった補正係数」という位置づけに留めます。
+    </div>
+  </section>
+
+  <section id="solid">
+    <h2>③ 立体角 ω の厳密な定義</h2>
+    <p>
+      第3章では立体角を「方向の集まりの広さ」と直感で導入しました。厳密には次のように定義されます。
+    </p>
+    <p>
+      平面の角度（ラジアン）が「半径1の円で、弧の長さ」で測られたのを思い出してください。
+      立体角はその3D版で、<strong>半径1の球で、切り取る面積</strong>で測ります。単位は<strong>ステラジアン (sr)</strong>です。
+    </p>
+    <div class="formula">
+      ω = A / r²
+      <div class="jp">半径 r の球面上で面積 A を切り取る方向の集まりの立体角。単位球（r=1）なら ω = A</div>
+    </div>
+    <ul>
+      <li>球全体の面積は 4πr² なので、<strong>全方向の立体角は 4π sr</strong></li>
+      <li>半球はその半分で <strong>2π sr</strong></li>
+      <li>微小な立体角は <span class="k">dω = sinθ dθ dφ</span>（θ＝天頂角、φ＝方位角）で表される</li>
+    </ul>
+    <p>
+      第3章の「半球を細かく分割して足す」は、この dω を単位として足し合わせる操作そのものでした。
+    </p>
+  </section>
+
+  <section id="radio">
+    <h2>④ 放射輝度・放射照度などの用語整理</h2>
+    <p>
+      本編では「光の量」と大ざっぱに呼んでいた量を、放射計測（radiometry）の用語で整理します。
+      式の記号 L・E の意味がはっきりします。
+    </p>
+    <dl class="terms">
+      <dt>放射束 Φ（Radiant flux）／ 単位: W</dt>
+      <dd>単位時間に運ばれる光のエネルギー総量。いわば「光の総パワー」。</dd>
+      <dt>放射照度 E（Irradiance）／ 単位: W/m²</dt>
+      <dd>面の単位面積に<strong>入ってくる</strong>光の量。第11章までの (n·l) 込みで面に届く量はこれに近い。</dd>
+      <dt>放射輝度 L（Radiance）／ 単位: W/(m²·sr)</dt>
+      <dd>「ある1点から、ある1方向へ」出て行く（または通過する）光の量。単位に sr（立体角）が入るのがポイント。
+        <strong>カメラのピクセルが最終的に受け取るのは、この L</strong>。だから反射方程式の左辺は L<sub>o</sub>（出射放射輝度）。</dd>
+    </dl>
+    <div class="note">
+      <span class="tag">なぜ L が主役か</span>
+      放射輝度 L は「距離が変わっても（間に物がなければ）一定」という性質を持ちます。
+      だからカメラに届く明るさを議論するときは L で考えるのが自然で、レンダリング方程式も L で書かれます。
+    </div>
+    <div class="formula">
+      L<sub>o</sub>(v) = ∫<sub>Ω</sub> f(l, v) · L<sub>i</sub>(l) · (n·l) dω<sub>l</sub>
+      <div class="jp">出射放射輝度 = ∫ BRDF × 入射放射輝度 × (n·l) を半球で足す。第4章の式を、正しい用語で書いたもの</div>
+    </div>
+  </section>
+
+  <section id="ibl">
+    <h2>⑤ IBL（イメージベースドライティング）への入口</h2>
+    <p>
+      本編の実装はポイントライト1灯でした。しかし現実の物体は、空・壁・地面など
+      <strong>あらゆる方向</strong>からの光を受けています。これを画像（環境マップ／HDRI）で与えるのが IBL です。
+    </p>
+    <p>
+      反射方程式に戻ると、IBL は「L<sub>i</sub>(l) を1つの点光源ではなく、全方向の環境画像から取る」ことに相当します。
+      積分が復活するので、リアルタイムでは次の2つに<strong>事前計算で分割</strong>するのが定石です（Karis 2013）：
+    </p>
+    <ul>
+      <li><strong>ディフューズ IBL</strong>：環境を (n·l) で重み付けして半球積分した「放射照度マップ」を事前に作る。実行時は法線方向を引くだけ。</li>
+      <li><strong>スペキュラ IBL</strong>：roughness ごとに環境をぼかした「プレフィルタマップ」＋ BRDF の積分を近似した「環境BRDF」に分ける（split-sum 近似）。</li>
+    </ul>
+    <p>
+      本サイトの<a href="viewport.html">総合ビューポート</a>や各ミニビューアで使っている環境マップ（Sky 751 / 758）は、
+      まさにこの方式です。HDRI を <span class="k">js/envmap.js</span> に RGBM 符号化で焼き込み、
+      放射照度マップとプレフィルタ済みミップを事前計算して埋め込んでいます（fetch 不要でオフライン動作）。
+    </p>
+    <div class="note">
+      <span class="tag">実装メモ</span>
+      シェーダ側では <span class="k">irradianceEnv()</span>（拡散）と <span class="k">prefilteredEnv()</span>＋<span class="k">envBRDFApproxAB()</span>（鏡面）で
+      split-sum を再現しています。詳細は <span class="k">js/shaders.js</span> を参照してください。
+    </div>
+  </section>
+
+  <section id="refs">
+    <h2>⑥ 参考文献</h2>
+    <ul class="refs">
+      <li><b>Cook, R. L., &amp; Torrance, K. E. (1982).</b> "A Reflectance Model for Computer Graphics." <i>ACM Transactions on Graphics, 1(1).</i> — 本モデルの原論文。D に Beckmann 分布を使用（第8章コラム参照）。</li>
+      <li><b>Walter, B., et al. (2007).</b> "Microfacet Models for Refraction through Rough Surfaces." <i>EGSR.</i> — GGX（Trowbridge-Reitz）をマイクロファセットモデルへ導入。</li>
+      <li><b>Karis, B. (2013).</b> "Real Shading in Unreal Engine 4." <i>SIGGRAPH Course: Physically Based Shading.</i> — UE4 のPBR実装ノート。split-sum 近似・環境BRDFの元ネタ。</li>
+      <li><b>Schlick, C. (1994).</b> "An Inexpensive BRDF Model for Physically-based Rendering." <i>Computer Graphics Forum.</i> — フレネルの Schlick 近似（第9章）。</li>
+      <li><b>Trowbridge, T. S., &amp; Reitz, K. P. (1975).</b> "Average irregularity representation of a rough surface for ray reflection." <i>JOSA.</i> — GGX 分布の原型。</li>
+      <li><b>Heitz, E. (2014).</b> "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs." <i>JCGT.</i> — G 項（Smith）の厳密な扱い（第10章）。</li>
+    </ul>
+  </section>
+
+  <div class="chapter-nav">
+    <a href="ch12.html">← 第12章へ</a>
+    <a href="index.html">目次へ →</a>
+  </div>
+
+</div></main>
+
+</body>
+</html>
